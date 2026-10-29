@@ -14,6 +14,7 @@ export type ManagedUser = {
   gender: UserGender;
   roleId: string;
   status: "Aktif" | "Nonaktif";
+  accessPages?: string[];
 };
 
 export const USER_STORAGE_KEY = "ggf-managed-users";
@@ -52,3 +53,15 @@ export const DEFAULT_USERS: ManagedUser[] = [
     status: "Aktif",
   },
 ];
+
+export const USER_ACCESS_PAGES = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "rekap-kecelakaan", label: "Rekap Data Kecelakaan" },
+  { id: "master-data", label: "Master Data" },
+  { id: "manajemen-user", label: "Manajemen User" },
+  { id: "form-input-kecelakaan", label: "Form Input Kecelakaan" },
+  { id: "profile", label: "Profil Pengguna" },
+] as const;
+
+export const ACTIVITY_LOG_STORAGE_KEY = "ggf-user-activity-log";
+export type UserActivity = { id: string; waktu: string; pengguna: string; aktivitas: string; detail: string };

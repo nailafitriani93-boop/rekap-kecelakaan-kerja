@@ -27,4 +27,9 @@ export type AccidentRecord = AccidentForm & {
   id: string;
   createdAt: string;
   worker: Worker;
+  hkoHilang?: number | null;
+tanggalMasuk?: string;
+tanggalKunjungan1?: string;
+tanggalKunjungan2?: string;
+tanggalKunjungan3?: string;
 };

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -175,13 +176,13 @@ export default function MasterDataPage() {
 
     const averageAge = workers.length
       ? Math.round(
-          (workers.reduce(
-            (sum, worker) => sum + worker.umur,
-            0
-          ) /
-            workers.length) *
-            10
-        ) / 10
+        (workers.reduce(
+          (sum, worker) => sum + worker.umur,
+          0
+        ) /
+          workers.length) *
+        10
+      ) / 10
       : 0;
 
     return {
@@ -363,7 +364,7 @@ export default function MasterDataPage() {
       setMessage(
         `Master data berhasil diperbarui. ${addedCount} data karyawan baru ditambahkan dan ${updatedCount} data karyawan diperbarui. Total master karyawan: ${savedWorkers.length}.`
       );
-          setMessage(
+      setMessage(
         `Master data berhasil diperbarui. ${addedCount} data karyawan baru ditambahkan dan ${updatedCount} data karyawan diperbarui. Total master karyawan: ${mergedWorkers.length}.`
       );
     } catch (uploadError) {
@@ -385,7 +386,6 @@ export default function MasterDataPage() {
     <div className="space-y-6">
       {/* HEADER */}
       <div className="flex flex-col gap-1">
-
         <h1 className="text-2xl font-semibold text-gray-800 dark:text-white/90">
           Data Master Karyawan
         </h1>
@@ -477,57 +477,84 @@ export default function MasterDataPage() {
           )}
         </div>
 
-        {/* FORMAT EXCEL */}
-        <div className="mt-5 rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/50">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            Format Excel yang digunakan
-          </p>
+        {/* UNDUH TEMPLATE EXCEL */}
+        <div className="mt-4 flex flex-col gap-4 rounded-xl border border-emerald-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-900 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="23"
+                height="23"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <path d="M14 2v6h6" />
+                <path d="M8 13h8" />
+                <path d="M8 17h8" />
+              </svg>
+            </div>
 
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="px-3 py-2">KIT</th>
-                  <th className="px-3 py-2">
-                    Nama Lengkap
-                  </th>
-                  <th className="px-3 py-2">
-                    Jenis Kelamin
-                  </th>
-                  <th className="px-3 py-2">Umur</th>
-                  <th className="px-3 py-2">SubDep</th>
-                  <th className="px-3 py-2">
-                    Div/SubDiv
-                  </th>
-                  <th className="px-3 py-2">
-                    Status Pekerja
-                  </th>
-                </tr>
-              </thead>
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">
+                Template Excel Master Karyawan
+              </h3>
 
-              <tbody>
-                <tr>
-                  <td className="px-3 py-2">100001</td>
-                  <td className="px-3 py-2">
-                    Contoh Nama
-                  </td>
-                  <td className="px-3 py-2">
-                    Laki-laki
-                  </td>
-                  <td className="px-3 py-2">30</td>
-                  <td className="px-3 py-2">
-                    Produksi
-                  </td>
-                  <td className="px-3 py-2">
-                    Div A
-                  </td>
-                  <td className="px-3 py-2">
-                    Karyawan Tetap
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+              <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                Unduh template, isi data karyawan, lalu unggah
+                kembali melalui formulir di atas.
+              </p>
+
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {[
+                  "KIT",
+                  "Nama Lengkap",
+                  "Jenis Kelamin",
+                  "Umur",
+                  "SubDep",
+                  "Div/SubDiv",
+                  "Status Pekerja",
+                ].map((column) => (
+                  <span
+                    key={column}
+                    className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-[10px] font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                  >
+                    {column}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
+
+          <a
+            href="/template-master-karyawan.xlsx"
+            download="Template-Master-Karyawan.xlsx"
+            className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-800 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <path d="m7 10 5 5 5-5" />
+              <path d="M12 15V3" />
+            </svg>
+
+            Unduh Template
+          </a>
         </div>
       </section>
 

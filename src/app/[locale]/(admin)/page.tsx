@@ -30,17 +30,17 @@ const MONTHS = [
 ];
 
 const PIE_COLORS = [
-  "#B7DDB5",
-  "#F6D98A",
-  "#F5C39A",
-  "#9CC8A8",
-  "#C9D98A",
-  "#F2C77D",
-  "#A9D9C0",
-  "#F2B99F",
-  "#B7CFA7",
-  "#E8D79B",
-  "#9FC9B5",
+  "#16843F", // 1. Hijau GGF
+  "#E85D75", // 2. Merah mawar
+  "#F28C45", // 3. Oranye
+  "#3478C7", // 4. Biru
+  "#8DBB35", // 5. Hijau limau
+  "#8B6BC1", // 6. Ungu
+  "#D5A12E", // 7. Emas
+  "#919794ff", // 8. grey
+  "#159D98", // 9. Toska
+  "#795548", // 10. Cokelat
+  "#D957A8", // 11. Pink
 ];
 
 function getRecordDate(record: AccidentRecord) {
@@ -102,6 +102,9 @@ export default function DashboardPage() {
 
   const [selectedSubDep, setSelectedSubDep] =
     useState("all");
+
+  const [subDepDropdownOpen, setSubDepDropdownOpen] =
+    useState(false);
 
   const [subDepAnalysisMode, setSubDepAnalysisMode] =
     useState<"monthly" | "yearly">("monthly");
@@ -206,6 +209,11 @@ export default function DashboardPage() {
     const element =
       selectedMonthSectionRef.current;
 
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+
     element.animate(
       [
         {
@@ -262,14 +270,14 @@ export default function DashboardPage() {
 
   const maleAverageAge = maleWorkers.length
     ? Math.round(
-        (maleWorkers.reduce(
-          (sum, worker) =>
-            sum + Number(worker.umur || 0),
-          0
-        ) /
-          maleWorkers.length) *
-          10
-      ) / 10
+      (maleWorkers.reduce(
+        (sum, worker) =>
+          sum + Number(worker.umur || 0),
+        0
+      ) /
+        maleWorkers.length) *
+      10
+    ) / 10
     : 0;
 
   const femaleWorkers = workers.filter(
@@ -281,26 +289,26 @@ export default function DashboardPage() {
   const femaleAverageAge =
     femaleWorkers.length
       ? Math.round(
-          (femaleWorkers.reduce(
-            (sum, worker) =>
-              sum + Number(worker.umur || 0),
-            0
-          ) /
-            femaleWorkers.length) *
-            10
-        ) / 10
-      : 0;
-
-  const averageAge = workers.length
-    ? Math.round(
-        (workers.reduce(
+        (femaleWorkers.reduce(
           (sum, worker) =>
             sum + Number(worker.umur || 0),
           0
         ) /
-          workers.length) *
-          10
+          femaleWorkers.length) *
+        10
       ) / 10
+      : 0;
+
+  const averageAge = workers.length
+    ? Math.round(
+      (workers.reduce(
+        (sum, worker) =>
+          sum + Number(worker.umur || 0),
+        0
+      ) /
+        workers.length) *
+      10
+    ) / 10
     : 0;
 
   const years = useMemo(() => {
@@ -337,7 +345,7 @@ export default function DashboardPage() {
       const monthMatches =
         filterMonth === "all" ||
         getRecordMonth(record) ===
-          Number(filterMonth);
+        Number(filterMonth);
 
       const dateMatches =
         !filterDate ||
@@ -376,21 +384,21 @@ export default function DashboardPage() {
     const year = filterDate
       ? Number(filterDate.slice(0, 4))
       : selectedYear ??
-        (filterYear !== "all"
-          ? Number(filterYear)
-          : years[0] ?? currentYear);
+      (filterYear !== "all"
+        ? Number(filterYear)
+        : years[0] ?? currentYear);
 
     const source = filterDate
       ? records
       : records.filter(
-          (record) =>
-            Number(
-              getRecordDate(record).slice(
-                0,
-                4
-              )
-            ) === year
-        );
+        (record) =>
+          Number(
+            getRecordDate(record).slice(
+              0,
+              4
+            )
+          ) === year
+      );
 
     const counts = MONTHS.map(
       (name, month) => ({
@@ -399,10 +407,10 @@ export default function DashboardPage() {
         count: source.filter(
           (record) =>
             getRecordMonth(record) ===
-              month &&
+            month &&
             (!filterDate ||
               getRecordDate(record) ===
-                filterDate)
+              filterDate)
         ).length,
       })
     );
@@ -433,7 +441,7 @@ export default function DashboardPage() {
 
         return (
           getRecordMonth(record) ===
-            selectedMonth &&
+          selectedMonth &&
           Number(date.slice(0, 4)) === year
         );
       })
@@ -502,16 +510,16 @@ export default function DashboardPage() {
     1,
     Math.ceil(
       previewRecords.length /
-        ITEMS_PER_PAGE
+      ITEMS_PER_PAGE
     )
   );
 
   const currentPageRecords =
     previewRecords.slice(
       (selectedPage - 1) *
-        ITEMS_PER_PAGE,
+      ITEMS_PER_PAGE,
       selectedPage *
-        ITEMS_PER_PAGE
+      ITEMS_PER_PAGE
     );
 
   const dailyCounts = useMemo(() => {
@@ -591,16 +599,46 @@ export default function DashboardPage() {
   }, [workers]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 dashboard-graphs-slowmo">
+      <style>{`
+        @keyframes dashboardGraphBarRise {
+          from { transform: scaleY(0); opacity: 0.25; }
+          to { transform: scaleY(1); opacity: 1; }
+        }
+        .dashboard-graphs-slowmo .dashboard-bar-draw {
+          transform-origin: bottom center;
+          animation: dashboardGraphBarRise 2.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @keyframes dashboardPieCircularReveal {
+          0% {
+            opacity: 0;
+            transform: rotate(-360deg);
+          }
+          100% {
+            opacity: 1;
+            transform: rotate(0deg);
+          }
+        }
+        .dashboard-graphs-slowmo .dashboard-pie-draw {
+          transform-box: fill-box;
+          transform-origin: center;
+          animation: dashboardPieCircularReveal 2.4s linear both;
+        }
+        @keyframes dashboardGraphProgress {
+          from { transform: scaleX(0); opacity: 0.25; }
+          to { transform: scaleX(1); opacity: 1; }
+        }
+        .dashboard-graphs-slowmo .dashboard-progress-draw {
+          transform-origin: left center;
+          animation: dashboardGraphProgress 2.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .dashboard-graphs-slowmo .dashboard-bar-draw,
+          .dashboard-graphs-slowmo .dashboard-pie-draw,
+          .dashboard-graphs-slowmo .dashboard-progress-draw { animation: none; }
+        }
+      `}</style>
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold text-gray-800 dark:text-white/90">
-          Dashboard Rekap Kecelakaan Kerja
-        </h1>
-
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Insight kecelakaan berdasarkan tanggal,
-          lokasi, penyebab, dan grouping kejadian.
-        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -629,287 +667,344 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <section className="ggf-card">
-        <div className="ggf-card-header">
-          <div>
-            <h2>
-              Kecelakaan Kerja Per Bulan
-            </h2>
-
-            <p>
-              Klik batang bulan untuk melihat
-              grafik kecelakaan per tanggal.
+      <section className="ggf-card !p-3 sm:!p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-gray-800 dark:text-white/90">Aksi Cepat</h2>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Kelola data tanpa masuk ke database.
             </p>
           </div>
 
-          <select
-            value={monthly.year}
-            onChange={(e) => {
-              setSelectedYear(
-                Number(e.target.value)
-              );
-
-              setFilterYear(
-                e.target.value
-              );
-
-              setFilterMonth("all");
-              setFilterDate("");
-              setSelectedMonth(null);
-              setSelectedDate(null);
-              setSelectedPage(1);
-            }}
-            className="ggf-dashboard-select"
-          >
-            {years.map((year) => (
-              <option
-                key={year}
-                value={year}
-              >
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="mt-6 overflow-x-auto pb-2">
-          <div className="min-w-[760px] rounded-xl border border-gray-100 bg-gray-50/50 px-5 pb-4 pt-6 dark:border-gray-800 dark:bg-gray-900/20">
-            <div
-              ref={monthlyChartRef}
-              className="relative h-[300px]"
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/form-input-kecelakaan"
+             className="ggf-action-card !flex !min-h-0 !w-auto !items-center !gap-1.5 !rounded-lg !px-2.5 !py-1.5"
             >
-              <div className="pointer-events-none absolute inset-x-0 top-0 bottom-10 flex flex-col justify-between">
-                {[0, 1, 2, 3, 4].map(
-                  (line) => (
-                    <div
-                      key={line}
-                      className="border-t border-dashed border-gray-200 dark:border-gray-800"
-                    />
-                  )
-                )}
-              </div>
+              <span className="ggf-action-icon !h-6 !w-6 !text-xs">+</span>
+              <span>
+                <b className="text-xs">Input Kecelakaan</b>
+              </span>
+            </Link>
 
-              <div className="relative flex h-full items-end gap-3">
-                {monthly.counts.map(
-                  (item) => {
-                    const max = Math.max(
-                      ...monthly.counts.map(
-                        (entry) =>
-                          entry.count
-                      ),
-                      1
-                    );
-
-                    const height =
-                      Math.max(
-                        (item.count /
-                          max) *
-                          100,
-                        item.count
-                          ? 7
-                          : 2
-                      );
-
-                    const isSelected =
-                      selectedMonth ===
-                      item.month;
-
-                    const isHovered =
-                      hoveredMonth ===
-                      item.month;
-
-                    return (
-                      <button
-                        key={item.month}
-                        type="button"
-                        className="group relative flex h-full min-w-[48px] cursor-pointer flex-col items-center justify-end"
-                        onMouseEnter={() =>
-                          setHoveredMonth(
-                            item.month
-                          )
-                        }
-                        onMouseMove={(event) => {
-                          const rect =
-                            monthlyChartRef.current?.getBoundingClientRect();
-
-                          if (!rect) {
-                            return;
-                          }
-
-                          let x =
-                            event.clientX -
-                            rect.left +
-                            18;
-
-                          let y =
-                            event.clientY -
-                            rect.top -
-                            76;
-
-                          const tooltipWidth =
-                            190;
-
-                          const tooltipHeight =
-                            64;
-
-                          if (
-                            x +
-                              tooltipWidth >
-                            rect.width
-                          ) {
-                            x =
-                              event.clientX -
-                              rect.left -
-                              tooltipWidth -
-                              18;
-                          }
-
-                          if (x < 0) {
-                            x = 0;
-                          }
-
-                          if (
-                            y < 0
-                          ) {
-                            y =
-                              event.clientY -
-                              rect.top +
-                              18;
-                          }
-
-                          if (
-                            y +
-                              tooltipHeight >
-                            rect.height
-                          ) {
-                            y =
-                              rect.height -
-                              tooltipHeight;
-                          }
-
-                          setMonthlyTooltipPosition({
-                            x,
-                            y,
-                          });
-                        }}
-                        onMouseLeave={() =>
-                          setHoveredMonth(null)
-                        }
-                        onClick={() => {
-                          const isSame =
-                            selectedMonth ===
-                            item.month;
-
-                          setSelectedMonth(
-                            isSame
-                              ? null
-                              : item.month
-                          );
-
-                          setSelectedDate(
-                            null
-                          );
-
-                          setSelectedYear(
-                            monthly.year
-                          );
-
-                          setSelectedPage(1);
-                        }}
-                      >
-                        <div className="relative flex h-[250px] w-full items-end justify-center">
-                          <span
-                            className="block w-full max-w-[28px] rounded-t-[6px] transition-all duration-200"
-                            style={{
-                              height: `${height}%`,
-                              background:
-                                isHovered ||
-                                isSelected
-                                  ? "#B8D8A8"
-                                  : "#DDE8D6",
-                              opacity:
-                                isHovered ||
-                                isSelected
-                                  ? 1
-                                  : 0.95,
-                              transform:
-                                isHovered
-                                  ? "scaleX(1.12)"
-                                  : "scaleX(1)",
-                              boxShadow:
-                                isHovered ||
-                                isSelected
-                                  ? "0 4px 10px rgba(22,132,63,0.18)"
-                                  : "none",
-                            }}
-                          />
-                        </div>
-
-                        <span
-                          className={`mt-3 text-xs font-medium transition-colors ${
-                            isSelected
-                              ? "text-emerald-700 dark:text-emerald-400"
-                              : "text-gray-500 dark:text-gray-400"
-                          }`}
-                        >
-                          {item.label}
-                        </span>
-                      </button>
-                    );
-                  }
-                )}
-              </div>
-
-              {hoveredMonth !== null && (
-                <div
-                  className="pointer-events-none absolute z-30 whitespace-nowrap rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-800 shadow-lg dark:bg-gray-800 dark:text-white"
-                  style={{
-                    left: `${monthlyTooltipPosition.x}px`,
-                    top: `${monthlyTooltipPosition.y}px`,
-                    transition:
-                      "left 80ms ease-out, top 80ms ease-out",
-                  }}
-                >
-                  <span className="block">
-                    {
-                      monthly.counts[
-                        hoveredMonth
-                      ].label
-                    }
-                    ,{" "}
-                    {monthly.year}
-                  </span>
-
-                  <span className="mt-1 block text-sm text-gray-500 dark:text-gray-300">
-                    Kecelakaan{" "}
-                    <b className="text-gray-800 dark:text-white">
-                      {
-                        monthly.counts[
-                          hoveredMonth
-                        ].count
-                      }
-                    </b>
-                  </span>
-                </div>
-              )}
-            </div>
+            <Link
+              href="/master-data"
+              className="ggf-action-card !flex !min-h-0 !w-auto !items-center !gap-1.5 !rounded-lg !px-2.5 !py-1.5"
+            >
+              <span className="ggf-action-icon !h-6 !w-6 !text-xs">↑</span>
+              <span>
+                <b className="text-xs">Upload Master Data</b>
+              </span>
+            </Link>
           </div>
         </div>
       </section>
 
-  <div className="xl:col-span-1">
-    <PieCard
-      title="Kecelakaan Karena Apa?"
-      subtitle="Proporsi penyebab berdasarkan grouping kecelakaan"
-      items={Object.entries(
-        groupingCounts
-      ).sort(
-        (a, b) => b[1] - a[1]
-      )}
-    />
-  </div>
-      </div>
+     <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(220px,0.7fr)]">
+  <div className="h-full [&_.ggf-card]:h-full">
+    <section className="ggf-card flex h-full flex-col">
+      <div className="ggf-card-header">
+        <div>
+          <h2 className="text-sm">
+            Kecelakaan Kerja Per Bulan
+          </h2>
+
+          <p className="text-xs">
+            Klik batang bulan untuk melihat
+            grafik kecelakaan per tanggal.
+          </p>
+        </div>
+              <select
+                value={monthly.year}
+                onChange={(e) => {
+                  setSelectedYear(
+                    Number(e.target.value)
+                  );
+
+                  setFilterYear(
+                    e.target.value
+                  );
+
+                  setFilterMonth("all");
+                  setFilterDate("");
+                  setSelectedMonth(null);
+                  setSelectedDate(null);
+                  setSelectedPage(1);
+                }}
+                className="ggf-dashboard-select"
+              >
+                {years.map((year) => (
+                  <option
+                    key={year}
+                    value={year}
+                  >
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mt-4 w-full flex-1 pb-2">
+              <div className="w-full min-w-0 rounded-xl border border-gray-100 bg-gray-50/50 px-3 pb-3 pt-4 dark:border-gray-800 dark:bg-gray-900/20">
+                <div
+                  ref={monthlyChartRef}
+                  className="relative h-[250px]"
+                >
+                  <div className="pointer-events-none absolute inset-x-0 top-0 bottom-10 flex flex-col justify-between">
+                    {[0, 1, 2, 3, 4].map(
+                      (line) => (
+                        <div
+                          key={line}
+                          className="border-t border-dashed border-gray-200 dark:border-gray-800"
+                        />
+                      )
+                    )}
+                  </div>
+
+                  <div className="relative flex h-full items-end gap-2">
+                    {monthly.counts.map(
+                      (item, index) => {
+                        const max = Math.max(
+                          ...monthly.counts.map(
+                            (entry) =>
+                              entry.count
+                          ),
+                          1
+                        );
+
+                        const height =
+                          Math.max(
+                            (item.count /
+                              max) *
+                            100,
+                            item.count
+                              ? 7
+                              : 2
+                          );
+
+                        const isSelected =
+                          selectedMonth ===
+                          item.month;
+
+                        const isHovered =
+                          hoveredMonth ===
+                          item.month;
+
+                        return (
+                          <button
+                            key={item.month}
+                            type="button"
+                            className="group relative flex h-full min-w-0 flex-1 cursor-pointer flex-col items-center justify-end"
+                            onMouseEnter={() =>
+                              setHoveredMonth(
+                                item.month
+                              )
+                            }
+                            onMouseMove={(event) => {
+                              const rect =
+                                monthlyChartRef.current?.getBoundingClientRect();
+
+                              if (!rect) {
+                                return;
+                              }
+
+                              let x =
+                                event.clientX -
+                                rect.left +
+                                18;
+
+                              let y =
+                                event.clientY -
+                                rect.top -
+                                76;
+
+                              const tooltipWidth =
+                                190;
+
+                              const tooltipHeight =
+                                64;
+
+                              if (
+                                x +
+                                tooltipWidth >
+                                rect.width
+                              ) {
+                                x =
+                                  event.clientX -
+                                  rect.left -
+                                  tooltipWidth -
+                                  18;
+                              }
+
+                              if (x < 0) {
+                                x = 0;
+                              }
+
+                              if (
+                                y < 0
+                              ) {
+                                y =
+                                  event.clientY -
+                                  rect.top +
+                                  18;
+                              }
+
+                              if (
+                                y +
+                                tooltipHeight >
+                                rect.height
+                              ) {
+                                y =
+                                  rect.height -
+                                  tooltipHeight;
+                              }
+
+                              setMonthlyTooltipPosition({
+                                x,
+                                y,
+                              });
+                            }}
+                            onMouseLeave={() =>
+                              setHoveredMonth(null)
+                            }
+                            onClick={() => {
+                              const isSame =
+                                selectedMonth ===
+                                item.month;
+
+                              setSelectedMonth(
+                                isSame
+                                  ? null
+                                  : item.month
+                              );
+
+                              setSelectedDate(
+                                null
+                              );
+
+                              setSelectedYear(
+                                monthly.year
+                              );
+
+                              setSelectedPage(1);
+                            }}
+                          >
+                            <div className="relative flex h-[205px] w-full items-end justify-center">
+                              <span
+                                className="dashboard-bar-draw block w-full max-w-[28px] rounded-t-[6px] transition-all duration-200"
+                                style={{
+                                  animationDelay: `${index * 0.18}s`,
+                                  height: `${height}%`,
+                                  background:
+                                    isHovered ||
+                                      isSelected
+                                      ? "#16843F"
+                                      : "#DDE8D6",
+                                  opacity:
+                                    isHovered ||
+                                      isSelected
+                                      ? 1
+                                      : 0.95,
+                                  transform:
+                                    isHovered
+                                      ? "scaleX(1.12)"
+                                      : "scaleX(1)",
+                                  boxShadow:
+                                    isHovered ||
+                                      isSelected
+                                      ? "0 4px 10px rgba(22,132,63,0.18)"
+                                      : "none",
+                                }}
+                              />
+                            </div>
+
+                            <span
+                              className={`mt-3 text-xs font-medium transition-colors ${isSelected
+                                ? "text-emerald-700 dark:text-emerald-400"
+                                : "text-gray-500 dark:text-gray-400"
+                                }`}
+                            >
+                              {item.label}
+                            </span>
+                          </button>
+                        );
+                      }
+                    )}
+                  </div>
+
+                  {hoveredMonth !== null && (
+                    <div
+                      className="pointer-events-none absolute z-30 whitespace-nowrap rounded-lg bg-white px-4 py-3 text-sm font-medium text-gray-800 shadow-lg dark:bg-gray-800 dark:text-white"
+                      style={{
+                        left: `${monthlyTooltipPosition.x}px`,
+                        top: `${monthlyTooltipPosition.y}px`,
+                        transition:
+                          "left 80ms ease-out, top 80ms ease-out",
+                      }}
+                    >
+                      <span className="block">
+                        {
+                          monthly.counts[
+                            hoveredMonth
+                          ].label
+                        }
+                        ,{" "}
+                        {monthly.year}
+                      </span>
+
+                      <span className="mt-1 block text-sm text-gray-500 dark:text-gray-300">
+                        Kecelakaan{" "}
+                        <b className="text-gray-800 dark:text-white">
+                          {
+                            monthly.counts[
+                              hoveredMonth
+                            ].count
+                          }
+                        </b>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div className="h-full [&_.ggf-card]:h-full">
+          <PieCard
+            title="Kecelakaan Karena Apa?"
+            subtitle="Proporsi penyebab berdasarkan grouping kecelakaan"
+            items={Object.entries(
+              groupingCounts
+            ).sort(
+              (a, b) => b[1] - a[1]
+            )}
+          />
+        </div>
+
+        <div className="h-full [&_.ggf-card]:h-full">
+          <InsightCard
+            title="Status Pekerja"
+            subtitle="Berdasarkan master data"
+          >
+            <BarList
+              items={Object.entries(
+                countBy(
+                  workers,
+                  (worker) =>
+                    worker.statusPekerja ||
+                    "Tidak diisi"
+                )
+              )
+                .sort(
+                  (a, b) => b[1] - a[1]
+                )
+                .slice(0, 6)}
+              total={workers.length}
+            />
+          </InsightCard>
+        </div>
+      </div >
 
       {selectedMonth !== null && (
         <section
@@ -950,9 +1045,8 @@ export default function DashboardPage() {
                     viewBox="0 0 12 12"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
-                    className={`transition-transform duration-200 ${
-                      isExportMenuOpen ? "rotate-180" : ""
-                    }`}
+                    className={`transition-transform duration-200 ${isExportMenuOpen ? "rotate-180" : ""
+                      }`}
                   >
                     <path
                       d="M3 4.5L6 7.5L9 4.5"
@@ -1032,7 +1126,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="overflow-x-auto pb-3">
-                <div className="min-w-[700px] rounded-xl border border-gray-100 bg-gray-50/50 px-5 pb-4 pt-6 dark:border-gray-800 dark:bg-gray-900/20">
+                <div className="min-w-[700px] rounded-xl border border-gray-100 bg-gray-50/50 px-5 pb-4 pt-3 dark:border-gray-800 dark:bg-gray-900/20">
                   <div
                     ref={dailyChartRef}
                     className="relative h-[280px]"
@@ -1050,7 +1144,7 @@ export default function DashboardPage() {
 
                     <div className="relative flex h-full items-end gap-2">
                       {dailyCounts.map(
-                        (item) => {
+                        (item, index) => {
                           const max =
                             Math.max(
                               ...dailyCounts.map(
@@ -1064,24 +1158,23 @@ export default function DashboardPage() {
                             Math.max(
                               (item.count /
                                 max) *
-                                100,
+                              100,
                               8
                             );
 
-                          const dateValue = `${
-                            selectedYear ??
+                          const dateValue = `${selectedYear ??
                             monthly.year
-                          }-${String(
-                            selectedMonth + 1
-                          ).padStart(
-                            2,
-                            "0"
-                          )}-${String(
-                            item.day
-                          ).padStart(
-                            2,
-                            "0"
-                          )}`;
+                            }-${String(
+                              selectedMonth + 1
+                            ).padStart(
+                              2,
+                              "0"
+                            )}-${String(
+                              item.day
+                            ).padStart(
+                              2,
+                              "0"
+                            )}`;
 
                           const isHovered =
                             hoveredDay ===
@@ -1126,7 +1219,7 @@ export default function DashboardPage() {
 
                                 if (
                                   x +
-                                    tooltipWidth >
+                                  tooltipWidth >
                                   rect.width
                                 ) {
                                   x =
@@ -1151,7 +1244,7 @@ export default function DashboardPage() {
 
                                 if (
                                   y +
-                                    tooltipHeight >
+                                  tooltipHeight >
                                   rect.height
                                 ) {
                                   y =
@@ -1188,27 +1281,28 @@ export default function DashboardPage() {
                                       1
                                     );
                                   }}
-                                  className="w-full max-w-[28px] cursor-pointer rounded-t-[6px] transition-all duration-200"
+                                  className="dashboard-bar-draw w-full max-w-[28px] cursor-pointer rounded-t-[6px] transition-all duration-200"
                                   style={{
+                                    animationDelay: `${index * 0.18}s`,
                                     height: `${height}%`,
                                     background:
                                       isHovered ||
-                                      isSelected
-                                        ? "#F2D58A"
+                                        isSelected
+                                        ? "#e9822eff"
                                         : "#E8DFC5",
                                     opacity:
                                       isHovered ||
-                                      isSelected
+                                        isSelected
                                         ? 1
                                         : 0.95,
                                     transform:
                                       isHovered ||
-                                      isSelected
+                                        isSelected
                                         ? "scaleX(1.12)"
                                         : "scaleX(1)",
                                     boxShadow:
                                       isHovered ||
-                                      isSelected
+                                        isSelected
                                         ? "0 4px 10px rgba(22,132,63,0.18)"
                                         : "none",
                                   }}
@@ -1228,11 +1322,10 @@ export default function DashboardPage() {
                                     1
                                   );
                                 }}
-                                className={`mt-3 cursor-pointer text-[11px] font-medium transition-colors ${
-                                  isSelected
-                                    ? "text-emerald-700 dark:text-emerald-400"
-                                    : "text-gray-500 dark:text-gray-400"
-                                }`}
+                                className={`mt-3 cursor-pointer text-[11px] font-medium transition-colors ${isSelected
+                                  ? "text-emerald-700 dark:text-emerald-400"
+                                  : "text-gray-500 dark:text-gray-400"
+                                  }`}
                               >
                                 {item.day}
                               </button>
@@ -1304,8 +1397,8 @@ export default function DashboardPage() {
                 <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">
                   {selectedDate
                     ? `Data Kecelakaan Tanggal ${formatDate(
-                        selectedDate
-                      )}`
+                      selectedDate
+                    )}`
                     : "Preview Data"}
                 </h3>
 
@@ -1318,11 +1411,11 @@ export default function DashboardPage() {
 
               {previewRecords.length >
                 0 && (
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {previewRecords.length}{" "}
-                  total data
-                </span>
-              )}
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {previewRecords.length}{" "}
+                    total data
+                  </span>
+                )}
             </div>
 
             {previewRecords.length ? (
@@ -1483,16 +1576,16 @@ export default function DashboardPage() {
             )}
           </div>
         </section>
-      )}
+      )
+      }
 
-      <div className="grid grid-cols-1 gap-6">
-        <div className="w-full">
+      <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(260px,1fr)]">
+        <div className="h-full min-w-0 [&>section]:h-full">
           <InsightCard
-            title={`Kecelakaan Kerja per ${
-              subDepAnalysisMode === "monthly"
-                ? "Bulan"
-                : "Tahun"
-            }`}
+            title={`Kecelakaan Kerja per ${subDepAnalysisMode === "monthly"
+              ? "Bulan"
+              : "Tahun"
+              }`}
             subtitle="Tren kecelakaan berdasarkan SubDepartemen"
           >
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1502,18 +1595,17 @@ export default function DashboardPage() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
+              <div className="flex w-full min-w-0 flex-nowrap items-center justify-start gap-1 sm:w-auto sm:justify-end sm:gap-1.5">
+                <div className="flex shrink-0 flex-nowrap items-center gap-1">
                   <button
                     type="button"
                     onClick={() =>
                       setSubDepAnalysisMode("monthly")
                     }
-                    className={`ggf-dashboard-select cursor-pointer transition-colors ${
-                      subDepAnalysisMode === "monthly"
-                        ? "bg-[#16843f] text-white"
-                        : "bg-white text-gray-700"
-                    }`}
+                    className={`ggf-dashboard-select !h-9 shrink-0 whitespace-nowrap !px-2 text-xs cursor-pointer transition-colors ${subDepAnalysisMode === "monthly"
+                      ? "bg-[#16843f] text-white"
+                      : "bg-white text-gray-700"
+                      }`}
                   >
                     Per Bulan
                   </button>
@@ -1523,36 +1615,68 @@ export default function DashboardPage() {
                     onClick={() =>
                       setSubDepAnalysisMode("yearly")
                     }
-                    className={`ggf-dashboard-select cursor-pointer transition-colors ${
-                      subDepAnalysisMode === "yearly"
-                        ? "bg-[#16843f] text-white"
-                        : "bg-white text-gray-700"
-                    }`}
+                    className={`ggf-dashboard-select !h-9 shrink-0 whitespace-nowrap !px-2 text-xs cursor-pointer transition-colors ${subDepAnalysisMode === "yearly"
+                      ? "bg-[#16843f] text-white"
+                      : "bg-white text-gray-700"
+                      }`}
                   >
                     Per Tahun
                   </button>
                 </div>
 
-                <select
-                  value={selectedSubDep}
-                  onChange={(e) =>
-                    setSelectedSubDep(e.target.value)
-                  }
-                  className="ggf-dashboard-select w-[220px]"
-                >
-                  <option value="all">
-                    Semua SubDepartemen
-                  </option>
+                <div className="relative w-[clamp(132px,15vw,160px)] max-w-[38vw] min-w-0 shrink">
+                  <button
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded={subDepDropdownOpen}
+                    onClick={() => setSubDepDropdownOpen((open) => !open)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") setSubDepDropdownOpen(false);
+                    }}
+                    className="ggf-dashboard-select flex !h-9 w-full min-w-0 items-center justify-between gap-1 !px-2 text-xs cursor-pointer"
+                    title={selectedSubDep === "all" ? "Semua SubDepartemen" : selectedSubDep}
+                  >
+                    <span className="min-w-0 flex-1 truncate text-left">
+                      {selectedSubDep === "all" ? "Semua SubDepartemen" : selectedSubDep}
+                    </span>
+                    <svg className={`h-3.5 w-3.5 shrink-0 transition-transform ${subDepDropdownOpen ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.09 1.032l-4.25 4.51a.75.75 0 01-1.09 0l-4.25-4.51a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                    </svg>
+                  </button>
 
-                  {subDepOptions.map((subDep) => (
-                    <option
-                      key={subDep}
-                      value={subDep}
-                    >
-                      {subDep}
-                    </option>
-                  ))}
-                </select>
+                  {subDepDropdownOpen && (
+                    <>
+                      <button
+                        type="button"
+                        aria-label="Tutup daftar SubDepartemen"
+                        className="fixed inset-0 z-40 cursor-default"
+                        onClick={() => setSubDepDropdownOpen(false)}
+                      />
+                      <div
+                        role="listbox"
+                        aria-label="Pilih SubDepartemen"
+                        className="absolute left-0 top-[calc(100%+4px)] z-50 max-h-56 w-full overflow-y-auto overscroll-contain rounded-lg border border-gray-200 bg-white p-1 shadow-xl ring-1 ring-black/5 dark:border-gray-700 dark:bg-gray-900"
+                      >
+                        {[{ value: "all", label: "Semua SubDepartemen" }, ...subDepOptions.map((subDep) => ({ value: subDep, label: subDep }))].map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            role="option"
+                            aria-selected={selectedSubDep === option.value}
+                            title={option.label}
+                            onClick={() => {
+                              setSelectedSubDep(option.value);
+                              setSubDepDropdownOpen(false);
+                            }}
+                            className={`block w-full rounded-md px-2 py-2 text-left text-xs leading-4 transition-colors ${selectedSubDep === option.value ? "bg-green-50 font-semibold text-green-800 dark:bg-green-900/40 dark:text-green-200" : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"}`}
+                          >
+                            <span className="block truncate">{option.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1564,166 +1688,92 @@ export default function DashboardPage() {
             />
           </InsightCard>
         </div>
-      </div>
+        <div className="h-full min-w-0 [&>section]:h-full [&_svg]:max-w-full">
+          <InsightCard
+            title="Komposisi Jenis Kelamin"
+            subtitle={`${workers.length} pekerja`}
+          >
+            <GenderPie
+              male={male}
+              female={female}
+              malePercentage={
+                malePercentage
+              }
+              femalePercentage={
+                femalePercentage
+              }
+            />
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <InsightCard
-          title="Komposisi Jenis Kelamin"
-          subtitle={`${workers.length} pekerja`}
-        >
-          <GenderPie
-            male={male}
-            female={female}
-            malePercentage={
-              malePercentage
-            }
-            femalePercentage={
-              femalePercentage
-            }
-          />
+            <div className="mt-6">
+              <div className="ggf-insight-stat">
+                <span>Male</span>
 
-          <div className="mt-6">
-            <div className="ggf-insight-stat">
-              <span>Male</span>
+                <strong>{male}</strong>
+              </div>
 
-              <strong>{male}</strong>
-            </div>
-
-            <div className="ggf-progress">
-              <span
-                style={{
-                  width: `${
-                    workers.length
+              <div className="ggf-progress">
+                <span
+                  className="dashboard-progress-draw"
+                  style={{
+                    width: `${workers.length
                       ? (male /
-                          workers.length) *
-                        100
+                        workers.length) *
+                      100
                       : 0
-                  }%`,
-                  background: "#A8CDB5",
-                }}
-              />
+                      }%`,
+                    background: "#16843F",
+                  }}
+                />
+              </div>
+
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                Rata-rata umur pria:{" "}
+                <b>
+                  {maleAverageAge} tahun
+                </b>
+              </p>
             </div>
 
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Rata-rata umur pria:{" "}
-              <b>
-                {maleAverageAge} tahun
-              </b>
-            </p>
-          </div>
+            <div className="mt-4">
+              <div className="ggf-insight-stat">
+                <span>Female</span>
 
-          <div className="mt-4">
-            <div className="ggf-insight-stat">
-              <span>Female</span>
+                <strong>{female}</strong>
+              </div>
 
-              <strong>{female}</strong>
-            </div>
-
-            <div className="ggf-progress">
-              <span
-                style={{
-                  width: `${
-                    workers.length
+              <div className="ggf-progress">
+                <span
+                  className="dashboard-progress-draw"
+                  style={{
+                    width: `${workers.length
                       ? (female /
-                          workers.length) *
-                        100
+                        workers.length) *
+                      100
                       : 0
-                  }%`,
-                  background: "#E8B7C8",
-                }}
-              />
+                      }%`,
+                    background: "#F28C45",
+                  }}
+                />
+              </div>
+
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                Rata-rata umur wanita:{" "}
+                <b>
+                  {femaleAverageAge} tahun
+                </b>
+              </p>
             </div>
 
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Rata-rata umur wanita:{" "}
-              <b>
-                {femaleAverageAge} tahun
-              </b>
+            <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+              Total rata-rata umur pekerja:{" "}
+              <b>{averageAge}</b> tahun.
             </p>
-          </div>
-
-          <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-            Total rata-rata umur pekerja:{" "}
-            <b>{averageAge}</b> tahun.
-          </p>
-        </InsightCard>
-
-        <InsightCard
-          title="Status Pekerja"
-          subtitle="Berdasarkan master data"
-        >
-          <BarList
-            items={Object.entries(
-              countBy(
-                workers,
-                (worker) =>
-                  worker.statusPekerja ||
-                  "Tidak diisi"
-              )
-            )
-              .sort(
-                (a, b) => b[1] - a[1]
-              )
-              .slice(0, 6)}
-            total={workers.length}
-          />
-        </InsightCard>
+          </InsightCard>
+        </div>
       </div>
 
-      <section className="ggf-card">
-        <div className="ggf-card-header">
-          <div>
-            <h2>Aksi Cepat</h2>
 
-            <p>
-              Kelola data tanpa masuk ke
-              database.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <Link
-            href="/rekap-kecelakaan"
-            className="ggf-action-card"
-          >
-            <span className="ggf-action-icon">
-              +
-            </span>
-
-            <span>
-              <b>
-                Input Kecelakaan
-              </b>
-
-              <small>
-                Buat rekap kejadian baru.
-              </small>
-            </span>
-          </Link>
-
-          <Link
-            href="/master-data"
-            className="ggf-action-card"
-          >
-            <span className="ggf-action-icon">
-              ↑
-            </span>
-
-            <span>
-              <b>
-                Upload Master Data
-              </b>
-
-              <small>
-                Ganti master dari file
-                Excel.
-              </small>
-            </span>
-          </Link>
-        </div>
-      </section>
-    </div>
+    </div >
   );
 }
 
@@ -1739,13 +1789,13 @@ function formatDate(value: string) {
   return Number.isNaN(date.getTime())
     ? value
     : date.toLocaleDateString(
-        "id-ID",
-        {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        }
-      );
+      "id-ID",
+      {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }
+    );
 }
 
 function countBy<T>(
@@ -1775,18 +1825,18 @@ function MetricCard({
   note: string;
 }) {
   return (
-    <section className="ggf-card">
+    <section className="ggf-card !border-[#16843f] !bg-[#16843f]">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          <p className="text-sm font-medium !text-white">
             {label}
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-gray-800 dark:text-white/90">
+          <p className="mt-2 text-3xl font-bold !text-white">
             {value}
           </p>
 
-          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+          <p className="mt-1 text-xs !text-white/80">
             {note}
           </p>
         </div>
@@ -1796,7 +1846,6 @@ function MetricCard({
     </section>
   );
 }
-
 function MetricCardIcon({
   label,
 }: {
@@ -2071,10 +2120,10 @@ function BarList({
         <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700/40">
           {hlPercentage > 0 && (
             <div
-              className="group relative h-full transition-all duration-300"
+              className="dashboard-progress-draw group relative h-full transition-all duration-300"
               style={{
                 width: `${hlPercentage}%`,
-                background: "#B8D8A8",
+                background: "#16843F",
               }}
             >
               <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white shadow-lg group-hover:block">
@@ -2086,10 +2135,10 @@ function BarList({
 
           {karyawanTetapPercentage > 0 && (
             <div
-              className="group relative h-full transition-all duration-300"
+              className="dashboard-progress-draw group relative h-full transition-all duration-300"
               style={{
                 width: `${karyawanTetapPercentage}%`,
-                background: "#F2D58A",
+                background: "#F28C28",
               }}
             >
               <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs text-white shadow-lg group-hover:block">
@@ -2110,7 +2159,7 @@ function BarList({
           <span
             className="h-3 w-3 shrink-0 rounded-[3px]"
             style={{
-              background: "#B8D8A8",
+              background: "#16843F",
             }}
           />
 
@@ -2123,7 +2172,7 @@ function BarList({
           <span
             className="h-3 w-3 shrink-0 rounded-[3px]"
             style={{
-              background: "#F2D58A",
+              background: "#F28C28",
             }}
           />
 
@@ -2182,9 +2231,10 @@ function GenderPie({
         <div className="relative flex w-full justify-center">
           <div className="relative">
             <svg
-              width="240"
-              height="240"
+              width="180"
+              height="180"
               viewBox="0 0 240 240"
+              className="h-auto w-[180px] max-w-full"
             >
               <circle
                 cx="120"
@@ -2273,9 +2323,10 @@ function GenderPie({
       <div className="relative flex w-full justify-center">
         <div className="relative">
           <svg
-            width="240"
-            height="240"
+            width="180"
+            height="180"
             viewBox="0 0 240 240"
+            className="h-auto w-[180px] max-w-full"
           >
             <circle
               cx="120"
@@ -2284,55 +2335,58 @@ function GenderPie({
               fill="#F3F4F6"
             />
 
-            <path
-              d={malePath}
-              fill="#A8CDB5"
-              opacity={
-                femaleIsHovered
-                  ? 0.45
-                  : 1
-              }
-              onMouseEnter={() =>
-                setHoveredIndex(0)
-              }
-              onMouseLeave={() =>
-                setHoveredIndex(null)
-              }
-              className="cursor-pointer transition-all duration-200"
-              style={{
-                transformOrigin:
-                  "120px 120px",
-                transform:
-                  maleIsHovered
-                    ? "scale(1.04)"
-                    : "scale(1)",
-              }}
-            />
-
-            <path
-              d={femalePath}
-              fill="#E8B7C8"
-              opacity={
-                maleIsHovered
-                  ? 0.45
-                  : 1
-              }
-              onMouseEnter={() =>
-                setHoveredIndex(1)
-              }
-              onMouseLeave={() =>
-                setHoveredIndex(null)
-              }
-              className="cursor-pointer transition-all duration-200"
-              style={{
-                transformOrigin:
-                  "120px 120px",
-                transform:
+            <g className="dashboard-pie-draw">
+              <path
+                d={malePath}
+                fill="#16843F"
+                opacity={
                   femaleIsHovered
-                    ? "scale(1.04)"
-                    : "scale(1)",
-              }}
-            />
+                    ? 0.45
+                    : 1
+                }
+                onMouseEnter={() =>
+                  setHoveredIndex(0)
+                }
+                onMouseLeave={() =>
+                  setHoveredIndex(null)
+                }
+                className="cursor-pointer transition-all duration-200"
+                style={{
+                  transformOrigin:
+                    "120px 120px",
+                  transform:
+                    maleIsHovered
+                      ? "scale(1.04)"
+                      : "scale(1)",
+                }}
+              />
+
+              <path
+                d={femalePath}
+                fill="#F28C45"
+                opacity={
+                  maleIsHovered
+                    ? 0.45
+                    : 1
+                }
+                onMouseEnter={() =>
+                  setHoveredIndex(1)
+                }
+                onMouseLeave={() =>
+                  setHoveredIndex(null)
+                }
+                className="cursor-pointer transition-all duration-200"
+                style={{
+                  transformOrigin:
+                    "120px 120px",
+                  transform:
+                    femaleIsHovered
+                      ? "scale(1.04)"
+                      : "scale(1)",
+                }}
+              />
+
+            </g>
 
             <circle
               cx="120"
@@ -2367,11 +2421,11 @@ function GenderPie({
             <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-white px-3 py-2 text-xs font-medium text-gray-800 shadow-lg">
               {hoveredIndex === 0
                 ? `Male — ${male} (${malePercentage.toFixed(
-                    1
-                  )}%)`
+                  1
+                )}%)`
                 : `Female — ${female} (${femalePercentage.toFixed(
-                    1
-                  )}%)`}
+                  1
+                )}%)`}
             </div>
           )}
         </div>
@@ -2382,7 +2436,7 @@ function GenderPie({
           <span
             className="h-3 w-3 rounded-[3px]"
             style={{
-              background: "#A8CDB5",
+              background: "#16843F",
             }}
           />
 
@@ -2395,7 +2449,7 @@ function GenderPie({
           <span
             className="h-3 w-3 rounded-[3px]"
             style={{
-              background: "#E8B7C8",
+              background: "#F28C45",
             }}
           />
 
@@ -2433,13 +2487,10 @@ function PieCard({
         title={title}
         subtitle={subtitle}
       >
-        <EmptyInsight
-          text="Belum ada data kecelakaan."
-        />
+        <div className="min-h-[260px]" />
       </InsightCard>
     );
   }
-
   const radius = 82;
   const center = 120;
   const circumference =
@@ -2480,11 +2531,11 @@ function PieCard({
       title={title}
       subtitle={subtitle}
     >
-      <div className="flex flex-col items-center">
-        <div className="relative">
+      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-center">
+        <div className="relative shrink-0">
           <svg
-            width="260"
-            height="260"
+            width="160"
+            height="160"
             viewBox="0 0 240 240"
           >
             <circle
@@ -2496,51 +2547,53 @@ function PieCard({
               strokeWidth="30"
             />
 
-            {segments.map(
-              (segment) => {
-                const isHovered =
-                  hoveredIndex ===
-                  segment.index;
+            <g className="dashboard-pie-draw">
+              {segments.map(
+                (segment) => {
+                  const isHovered =
+                    hoveredIndex ===
+                    segment.index;
 
-                return (
-                  <circle
-                    key={segment.label}
-                    cx="120"
-                    cy="120"
-                    r={radius}
-                    fill="none"
-                    stroke={
-                      PIE_COLORS[
+                  return (
+                    <circle
+                      key={segment.label}
+                      cx="120"
+                      cy="120"
+                      r={radius}
+                      fill="none"
+                      stroke={
+                        PIE_COLORS[
                         segment.index %
-                          PIE_COLORS.length
-                      ]
-                    }
-                    strokeWidth={
-                      isHovered
-                        ? 34
-                        : 30
-                    }
-                    strokeLinecap="butt"
-                    strokeDasharray={`${Math.max(
-                      segment.dash - 3,
-                      0
-                    )} ${circumference}`}
-                    strokeDashoffset={
-                      segment.offset
-                    }
-                    className="cursor-pointer transition-all duration-200"
-                    onMouseEnter={() =>
-                      setHoveredIndex(
-                        segment.index
-                      )
-                    }
-                    onMouseLeave={() =>
-                      setHoveredIndex(null)
-                    }
-                  />
-                );
-              }
-            )}
+                        PIE_COLORS.length
+                        ]
+                      }
+                      strokeWidth={
+                        isHovered
+                          ? 34
+                          : 30
+                      }
+                      strokeLinecap="butt"
+                      strokeDasharray={`${Math.max(
+                        segment.dash - 3,
+                        0
+                      )} ${circumference}`}
+                      strokeDashoffset={
+                        segment.offset
+                      }
+                      className="cursor-pointer transition-all duration-200"
+                      onMouseEnter={() =>
+                        setHoveredIndex(
+                          segment.index
+                        )
+                      }
+                      onMouseLeave={() =>
+                        setHoveredIndex(null)
+                      }
+                    />
+                  );
+                }
+              )}
+            </g>
 
             <circle
               cx="120"
@@ -2592,17 +2645,16 @@ function PieCard({
           )}
         </div>
 
-        <div className="mt-5 grid w-full grid-cols-2 gap-3">
+        <div className="mt-0 grid w-full min-w-0 flex-1 grid-cols-1 gap-2">
           {segments.map(
             (segment) => (
               <div
                 key={segment.label}
-                className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 transition-all ${
-                  hoveredIndex ===
+                className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 transition-all ${hoveredIndex ===
                   segment.index
-                    ? "bg-gray-50 dark:bg-gray-800"
-                    : ""
-                }`}
+                  ? "bg-gray-50 dark:bg-gray-800"
+                  : ""
+                  }`}
                 onMouseEnter={() =>
                   setHoveredIndex(
                     segment.index
@@ -2618,8 +2670,8 @@ function PieCard({
                     style={{
                       background:
                         PIE_COLORS[
-                          segment.index %
-                            PIE_COLORS.length
+                        segment.index %
+                        PIE_COLORS.length
                         ],
                     }}
                   />
@@ -2669,6 +2721,20 @@ function SubDepartmentMonthlyChart({
     selectedInsightPeriod,
     setSelectedInsightPeriod,
   ] = useState<number | null>(null);
+
+  const selectedSubDepartmentDetailRef =
+    useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedInsightPeriod === null) {
+      return;
+    }
+
+    selectedSubDepartmentDetailRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [selectedInsightPeriod]);
 
   const availableYears = useMemo(() => {
     const dataYears = Array.from(
@@ -2728,7 +2794,14 @@ function SubDepartmentMonthlyChart({
             return false;
           }
 
-          return Number(date.slice(0, 4)) === year;
+          return (
+            Number(date.slice(0, 4)) === year &&
+            (
+              selectedSubDep === "all" ||
+              String(record.worker?.subDep || "").trim() ===
+              selectedSubDep
+            )
+          );
         }).length
       );
     }
@@ -2852,7 +2925,7 @@ function SubDepartmentMonthlyChart({
         return (
           Number(date.slice(0, 4)) === year &&
           String(record.worker?.subDep || "").trim() ===
-            selectedSubDep
+          selectedSubDep
         );
       }).length;
     }
@@ -2921,7 +2994,7 @@ function SubDepartmentMonthlyChart({
       return (
         Number(date.slice(0, 4)) === year &&
         String(record.worker?.subDep || "").trim() ===
-          selectedSubDep
+        selectedSubDep
       );
     }).length;
   }, [
@@ -2946,10 +3019,18 @@ function SubDepartmentMonthlyChart({
     return records.some((record) => {
       const date = getRecordDate(record);
 
-      return Number(date.slice(0, 4)) === year;
+      return (
+        Number(date.slice(0, 4)) === year &&
+        (
+          selectedSubDep === "all" ||
+          String(record.worker?.subDep || "").trim() ===
+          selectedSubDep
+        )
+      );
     });
   }, [
     records,
+    selectedSubDep,
     selectedInsightPeriod,
     analysisMode,
     availableYears,
@@ -2972,11 +3053,17 @@ function SubDepartmentMonthlyChart({
 
       return (
         date &&
-        getRecordMonth(record) === selectedInsightPeriod
+        getRecordMonth(record) === selectedInsightPeriod &&
+        (
+          selectedSubDep === "all" ||
+          String(record.worker?.subDep || "").trim() ===
+          selectedSubDep
+        )
       );
     });
   }, [
     records,
+    selectedSubDep,
     selectedInsightPeriod,
     analysisMode,
   ]);
@@ -3060,7 +3147,7 @@ function SubDepartmentMonthlyChart({
   useEffect(() => {
     const from =
       previousCountsRef.current.length ===
-      periodCounts.length
+        periodCounts.length
         ? previousCountsRef.current
         : periodCounts;
 
@@ -3145,13 +3232,13 @@ function SubDepartmentMonthlyChart({
         paddingLeft +
         (index /
           Math.max(periodLabels.length - 1, 1)) *
-          chartWidth;
+        chartWidth;
 
       const y =
         paddingTop +
         chartHeight -
         (value / animatedMaxValue) *
-          chartHeight;
+        chartHeight;
 
       return {
         x,
@@ -3201,30 +3288,27 @@ function SubDepartmentMonthlyChart({
 
   const areaPath =
     points.length
-      ? `${linePath} L ${
-          points[points.length - 1].x
-        } ${
-          paddingTop +
-          chartHeight
-        } L ${points[0].x} ${
-          paddingTop +
-          chartHeight
-        } Z`
+      ? `${linePath} L ${points[points.length - 1].x
+      } ${paddingTop +
+      chartHeight
+      } L ${points[0].x} ${paddingTop +
+      chartHeight
+      } Z`
       : "";
 
   const hoveredItem =
     hoveredIndex !== null
       ? {
-          label:
-            periodFullLabels[hoveredIndex] ??
-            "",
-          value:
-            Math.round(
-              animatedCounts[
-                hoveredIndex
-              ] ?? 0
-            ),
-        }
+        label:
+          periodFullLabels[hoveredIndex] ??
+          "",
+        value:
+          Math.round(
+            animatedCounts[
+            hoveredIndex
+            ] ?? 0
+          ),
+      }
       : null;
 
   const tooltipWidth = 190;
@@ -3270,19 +3354,20 @@ function SubDepartmentMonthlyChart({
   }
 
   return (
-    <div className="w-full">
-      <div className="relative w-full overflow-x-auto pb-3">
+    <div className="w-full min-w-0">
+      {/* Batasi seluruh animasi dan tooltip di area grafik agar tidak
+          bergerak melewati batas kartu atau mendekati judul insight. */}
+      <div className="relative w-full min-w-0 overflow-hidden pb-3">
         <svg
           width={width}
           height={height}
           viewBox={`0 0 ${width} ${height}`}
-          className="block min-w-[900px] overflow-visible"
+          className="block h-auto w-full min-w-0 overflow-hidden"
           role="img"
-          aria-label={`Grafik kecelakaan kerja per ${
-            analysisMode === "yearly"
-              ? "tahun"
-              : "bulan"
-          } berdasarkan SubDepartemen`}
+          aria-label={`Grafik kecelakaan kerja per ${analysisMode === "yearly"
+            ? "tahun"
+            : "bulan"
+            } berdasarkan SubDepartemen`}
         >
           <defs>
             <linearGradient
@@ -3294,13 +3379,13 @@ function SubDepartmentMonthlyChart({
             >
               <stop
                 offset="0%"
-                stopColor="#16a34a"
+                stopColor="#F28C28"
                 stopOpacity="0.16"
               />
 
               <stop
                 offset="100%"
-                stopColor="#16a34a"
+                stopColor="#F28C28"
                 stopOpacity="0.01"
               />
             </linearGradient>
@@ -3328,12 +3413,12 @@ function SubDepartmentMonthlyChart({
                 paddingTop +
                 chartHeight -
                 (percent / 100) *
-                  chartHeight;
+                chartHeight;
 
               const gridValue =
                 Math.round(
                   (percent / 100) *
-                    maxValue
+                  maxValue
                 );
 
               return (
@@ -3410,7 +3495,7 @@ function SubDepartmentMonthlyChart({
           <path
             d={linePath}
             fill="none"
-            stroke="#16a34a"
+            stroke="#F28C28"
             strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -3454,17 +3539,17 @@ function SubDepartmentMonthlyChart({
               const leftBoundary =
                 previousPoint
                   ? (previousPoint.x +
-                      point.x) /
-                    2
+                    point.x) /
+                  2
                   : paddingLeft;
 
               const rightBoundary =
                 nextPoint
                   ? (point.x +
-                      nextPoint.x) /
-                    2
+                    nextPoint.x) /
+                  2
                   : paddingLeft +
-                    chartWidth;
+                  chartWidth;
 
               const isHovered =
                 hoveredIndex === index;
@@ -3527,7 +3612,7 @@ function SubDepartmentMonthlyChart({
                     y={paddingTop}
                     width={Math.max(
                       rightBoundary -
-                        leftBoundary,
+                      leftBoundary,
                       1
                     )}
                     height={
@@ -3623,31 +3708,30 @@ function SubDepartmentMonthlyChart({
       </div>
 
       {selectedInsightPeriod !== null && (
-        <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50/50 px-5 py-5 dark:border-gray-800 dark:bg-gray-900/20">
+        <div
+          ref={selectedSubDepartmentDetailRef}
+          className="mt-4 rounded-xl border border-gray-100 bg-gray-50/50 px-5 py-5 dark:border-gray-800 dark:bg-gray-900/20"
+        >
           <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">
                 {selectedSubDep === "all"
-                  ? `Top 10 SubDepartemen dengan Kecelakaan — ${
-                      periodFullLabels[selectedInsightPeriod]
-                    }`
-                  : `Kecelakaan ${selectedSubDep} — ${
-                      periodFullLabels[selectedInsightPeriod]
-                    }`}
+                  ? `Top 10 SubDepartemen dengan Kecelakaan — ${periodFullLabels[selectedInsightPeriod]
+                  }`
+                  : `Kecelakaan ${selectedSubDep} — ${periodFullLabels[selectedInsightPeriod]
+                  }`}
               </h3>
 
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {selectedSubDep === "all"
-                  ? `Menampilkan 10 SubDepartemen dengan jumlah kecelakaan tertinggi pada ${
-                      analysisMode === "yearly"
-                        ? "tahun"
-                        : "bulan"
-                    } yang dipilih.`
-                  : `Menampilkan jumlah kecelakaan ${selectedSubDep} pada ${
-                      analysisMode === "yearly"
-                        ? "tahun"
-                        : "bulan"
-                    } yang dipilih.`}
+                  ? `Menampilkan 10 SubDepartemen dengan jumlah kecelakaan tertinggi pada ${analysisMode === "yearly"
+                    ? "tahun"
+                    : "bulan"
+                  } yang dipilih.`
+                  : `Menampilkan jumlah kecelakaan ${selectedSubDep} pada ${analysisMode === "yearly"
+                    ? "tahun"
+                    : "bulan"
+                  } yang dipilih.`}
               </p>
             </div>
 
@@ -3737,21 +3821,19 @@ function SubDepartmentMonthlyChart({
                         className="grid grid-cols-[28px_minmax(150px,1fr)_minmax(120px,2fr)_44px] items-center gap-3"
                       >
                         <span
-                          className={`text-xs font-semibold ${
-                            isSelected
-                              ? "text-emerald-700 dark:text-emerald-400"
-                              : "text-gray-500 dark:text-gray-400"
-                          }`}
+                          className={`text-xs font-semibold ${isSelected
+                            ? "text-emerald-700 dark:text-emerald-400"
+                            : "text-gray-500 dark:text-gray-400"
+                            }`}
                         >
                           {item.month + 1}
                         </span>
 
                         <span
-                          className={`truncate text-xs font-medium ${
-                            isSelected
-                              ? "text-emerald-700 dark:text-emerald-400"
-                              : "text-gray-700 dark:text-gray-300"
-                          }`}
+                          className={`truncate text-xs font-medium ${isSelected
+                            ? "text-emerald-700 dark:text-emerald-400"
+                            : "text-gray-700 dark:text-gray-300"
+                            }`}
                           title={item.label}
                         >
                           {item.label}
@@ -3779,11 +3861,10 @@ function SubDepartmentMonthlyChart({
                         </div>
 
                         <span
-                          className={`text-right text-xs font-semibold ${
-                            isSelected
-                              ? "text-emerald-700 dark:text-emerald-400"
-                              : "text-gray-800 dark:text-white/90"
-                          }`}
+                          className={`text-right text-xs font-semibold ${isSelected
+                            ? "text-emerald-700 dark:text-emerald-400"
+                            : "text-gray-800 dark:text-white/90"
+                            }`}
                         >
                           {item.count}
                         </span>
@@ -4055,8 +4136,8 @@ function exportAnnualReport(
     <Worksheet ss:Name="${escapeXml(name)}">
       <Table ss:ExpandedColumnCount="${widths.length}" ss:ExpandedRowCount="0" x:FullColumns="1" x:FullRows="1">
         ${widths
-          .map((width) => `<Column ss:Width="${width}" />`)
-          .join("")}
+        .map((width) => `<Column ss:Width="${width}" />`)
+        .join("")}
         ${rows}
       </Table>
     </Worksheet>`;
@@ -4355,12 +4436,11 @@ function exportSelectedMonth(
   <Worksheet ss:Name="${escapeXml(
     `Data-Kecelakaan-${MONTHS[month]}-${year}`
   )}">
-    <Table ss:ExpandedColumnCount="${fields.length}" ss:ExpandedRowCount="${
-      rows.length + 1
+    <Table ss:ExpandedColumnCount="${fields.length}" ss:ExpandedRowCount="${rows.length + 1
     }" x:FullColumns="1" x:FullRows="1">
       ${columnWidths
-        .map((width) => `<Column ss:Width="${width}" />`)
-        .join("")}
+      .map((width) => `<Column ss:Width="${width}" />`)
+      .join("")}
       ${headerRow}
       ${dataRows}
     </Table>

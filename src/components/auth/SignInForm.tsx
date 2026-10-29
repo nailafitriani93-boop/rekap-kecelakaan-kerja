@@ -1,156 +1,805 @@
+
 "use client";
 
-import Checkbox from "@/components/form/input/Checkbox";
-import Input from "@/components/form/input/InputField";
-import Label from "@/components/form/Label";
-import Button from "@/components/ui/button/Button";
-import { Link } from "@/i18n/navigation";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
+import { Link, useRouter } from "@/i18n/navigation";
+import {
+  CURRENT_USER_STORAGE_KEY,
+  USER_STORAGE_KEY,
+  type ManagedUser,
+} from "@/data/userData";
 
 export default function SignInForm() {
+  const router = useRouter();
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+ const [loading, setLoading] = useState(false);
+const [loadingPage, setLoadingPage] = useState(false);
+const [error, setError] = useState("");
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    if (!username.trim() || !password) {
+      setError("Username dan password wajib diisi.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username.trim(),
+          password,
+          rememberMe,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success || !result.user) {
+        setError(
+          result.message || "Username atau password tidak sesuai."
+        );
+        return;
+      }
+
+      const managedUsers: ManagedUser[] = JSON.parse(
+        window.localStorage.getItem(USER_STORAGE_KEY) || "[]"
+      );
+
+      const managedUser = managedUsers.find(
+        (user) =>
+          String(user.username).trim().toLowerCase() ===
+          String(result.user.username).trim().toLowerCase()
+      );
+
+      const currentUser = {
+        ...result.user,
+        ...(managedUser
+          ? {
+              name: managedUser.name,
+              username: managedUser.username,
+              email: managedUser.email,
+              gender: managedUser.gender,
+            }
+          : {}),
+      };
+
+      window.localStorage.setItem(
+        CURRENT_USER_STORAGE_KEY,
+        JSON.stringify(currentUser)
+      );
+
+    window.dispatchEvent(new Event("ggf-user-updated"));
+
+setLoadingPage(true);
+router.push("/");
+router.refresh();
+
+    } catch {
+      setError(
+        "Tidak dapat terhubung ke server. Silakan coba kembali."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <div className="flex w-full flex-1 flex-col lg:w-1/2">
-      <div className="mx-auto mb-5 w-full max-w-md sm:pt-10">
-        <Link
-          href="/"
-          className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-        >
-          <ChevronLeftIcon className="rtl:rotate-180" />
-          Back to dashboard
-        </Link>
+  <>
+    {loadingPage && (
+      <div
+        role="status"
+        aria-live="polite"
+        className="fixed inset-0 z-[999999] flex flex-col items-center justify-center gap-4 bg-white/95"
+      >
+        <div
+          className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-green-700"
+          aria-hidden="true"
+        />
+        <p className="text-sm font-semibold text-gray-700">
+          Memuat halaman...
+        </p>
       </div>
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
-        <div>
-          <div className="mb-5 sm:mb-8">
-            <h1 className="mb-2 text-title-sm font-semibold text-gray-800 sm:text-title-md dark:text-white/90">
-              Sign In
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your email and password to sign in!
-            </p>
-          </div>
-          <div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-5">
-              <button className="inline-flex items-center justify-center gap-3 rounded-lg bg-gray-100 px-7 py-3 text-sm font-normal text-gray-700 transition-colors hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M18.7511 10.1944C18.7511 9.47495 18.6915 8.94995 18.5626 8.40552H10.1797V11.6527H15.1003C15.0011 12.4597 14.4654 13.675 13.2749 14.4916L13.2582 14.6003L15.9087 16.6126L16.0924 16.6305C17.7788 15.1041 18.7511 12.8583 18.7511 10.1944Z"
-                    fill="#4285F4"
-                  />
-                  <path
-                    d="M10.1788 18.75C12.5895 18.75 14.6133 17.9722 16.0915 16.6305L13.274 14.4916C12.5201 15.0068 11.5081 15.3666 10.1788 15.3666C7.81773 15.3666 5.81379 13.8402 5.09944 11.7305L4.99473 11.7392L2.23868 13.8295L2.20264 13.9277C3.67087 16.786 6.68674 18.75 10.1788 18.75Z"
-                    fill="#34A853"
-                  />
-                  <path
-                    d="M5.10014 11.7305C4.91165 11.186 4.80257 10.6027 4.80257 9.99992C4.80257 9.3971 4.91165 8.81379 5.09022 8.26935L5.08523 8.1534L2.29464 6.02954L2.20333 6.0721C1.5982 7.25823 1.25098 8.5902 1.25098 9.99992C1.25098 11.4096 1.5982 12.7415 2.20333 13.9277L5.10014 11.7305Z"
-                    fill="#FBBC05"
-                  />
-                  <path
-                    d="M10.1789 4.63331C11.8554 4.63331 12.9864 5.34303 13.6312 5.93612L16.1511 3.525C14.6035 2.11528 12.5895 1.25 10.1789 1.25C6.68676 1.25 3.67088 3.21387 2.20264 6.07218L5.08953 8.26943C5.81381 6.15972 7.81776 4.63331 10.1789 4.63331Z"
-                    fill="#EB4335"
-                  />
-                </svg>
-                Sign in with Google
-              </button>
-              <button className="inline-flex items-center justify-center gap-3 rounded-lg bg-gray-100 px-7 py-3 text-sm font-normal text-gray-700 transition-colors hover:bg-gray-200 hover:text-gray-800 dark:bg-white/5 dark:text-white/90 dark:hover:bg-white/10">
-                <svg
-                  width="21"
-                  className="fill-current"
-                  height="20"
-                  viewBox="0 0 21 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M15.6705 1.875H18.4272L12.4047 8.75833L19.4897 18.125H13.9422L9.59717 12.4442L4.62554 18.125H1.86721L8.30887 10.7625L1.51221 1.875H7.20054L11.128 7.0675L15.6705 1.875ZM14.703 16.475H16.2305L6.37054 3.43833H4.73137L14.703 16.475Z" />
-                </svg>
-                Sign in with X
-              </button>
-            </div>
-            <div className="relative py-3 sm:py-5">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200 dark:border-gray-800"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white p-2 text-gray-400 sm:px-5 sm:py-2 dark:bg-gray-900">
-                  Or
-                </span>
-              </div>
-            </div>
-            <form>
-              <div className="space-y-6">
-                <div>
-                  <Label>
-                    Email <span className="text-error-500">*</span>{" "}
-                  </Label>
-                  <Input placeholder="info@gmail.com" />
-                </div>
-                <div>
-                  <Label>
-                    Password <span className="text-error-500">*</span>{" "}
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                    />
-                    <span
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="inset-e-4 absolute top-1/2 z-30 -translate-y-1/2 cursor-pointer"
-                    >
-                      {showPassword ? (
-                        <EyeIcon className="fill-gray-500 dark:fill-gray-400" />
-                      ) : (
-                        <EyeCloseIcon className="fill-gray-500 dark:fill-gray-400" />
-                      )}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Checkbox checked={isChecked} onChange={setIsChecked} />
-                    <span className="block text-theme-sm font-normal text-gray-700 dark:text-gray-400">
-                      Keep me logged in
-                    </span>
-                  </div>
-                  <Link
-                    href="/reset-password"
-                    className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <div>
-                  <Button className="w-full" size="sm">
-                    Sign in
-                  </Button>
-                </div>
-              </div>
-            </form>
+    )}
 
-            <div className="mt-5">
-              <p className="text-center text-sm font-normal text-gray-700 sm:text-start dark:text-gray-400">
-                Don&apos;t have an account? {""}
-                <Link
-                  href="/signup"
-                  className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
-                >
-                  Sign Up
-                </Link>
-              </p>
-            </div>
+    <main className="ggf-login">
+
+      <div className="ggf-login-background" aria-hidden="true" />
+
+      <section className="ggf-login-visual">
+        <div className="ggf-login-brand">
+          <img
+            src="/images/logo/logo-nanas%20(2).png"
+            alt="Logo nanas"
+            className="ggf-login-brand-logo"
+            draggable={false}
+          />
+
+          <div className="ggf-login-brand-text">
+            <strong>REKAP DATA KECELAKAAN KERJA</strong>
+            <span>Sistem Informasi Keselamatan Kerja</span>
           </div>
         </div>
-      </div>
-    </div>
+
+        <div className="ggf-login-hero">
+          <h1>
+            Rekap Data
+            <br />
+            Kecelakaan Kerja
+          </h1>
+
+          <p>
+            Mencatat, memantau, dan menganalisis data kecelakaan
+            kerja untuk mendukung evaluasi serta meningkatkan
+            keselamatan di lingkungan kerja.
+          </p>
+        </div>
+
+        <p className="ggf-login-visual-footer">
+          © {new Date().getFullYear()} Rekap Data Kecelakaan Kerja
+        </p>
+      </section>
+
+      <section className="ggf-login-panel">
+        <div className="ggf-login-card">
+          <div className="ggf-login-logo-wrap">
+            <img
+              src="/images/logo/ggf-logo.png"
+              alt="Logo Great Giant Foods"
+              className="ggf-login-main-logo"
+              draggable={false}
+            />
+          </div>
+
+          <div className="ggf-login-heading">
+            <h2>Selamat Datang</h2>
+            <p>Silakan masuk untuk melanjutkan</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="ggf-login-form">
+            <div className="ggf-login-field">
+              <label htmlFor="username">Username</label>
+
+              <input
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                placeholder="Masukkan username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                disabled={loading}
+                required
+              />
+            </div>
+
+            <div className="ggf-login-field">
+              <label htmlFor="password">Password</label>
+
+              <div className="ggf-login-password-wrap">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="Masukkan password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  disabled={loading}
+                  required
+                />
+
+                <button
+                  type="button"
+                  className="ggf-login-show-password"
+                  onClick={() => setShowPassword((value) => !value)}
+                  disabled={loading}
+                  aria-label={
+                    showPassword
+                      ? "Sembunyikan password"
+                      : "Tampilkan password"
+                  }
+                >
+                  {showPassword ? "Sembunyikan" : "Tampilkan"}
+                </button>
+              </div>
+            </div>
+
+            <div className="ggf-login-options">
+              <label className="ggf-login-remember">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(event) =>
+                    setRememberMe(event.target.checked)
+                  }
+                  disabled={loading}
+                />
+                <span>Ingat saya</span>
+              </label>
+
+              <Link
+                href="/lupa-password"
+                className="ggf-login-forgot"
+              >
+                Lupa Password?
+              </Link>
+            </div>
+
+            {error && (
+              <div className="ggf-login-error" role="alert">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="ggf-login-submit"
+              disabled={loading}
+            >
+              {loading ? "Memeriksa akun..." : "Masuk"}
+            </button>
+          </form>
+
+          <p className="ggf-login-copyright">
+            © {new Date().getFullYear()} Great Giant Foods. Sistem internal.
+          </p>
+        </div>
+      </section>
+
+      <style jsx global>{`
+        .ggf-login,
+        .ggf-login * {
+          box-sizing: border-box;
+        }
+
+        .ggf-login {
+          position: relative;
+          isolation: isolate;
+          display: grid;
+          grid-template-columns: 60% 40%;
+          width: 100%;
+          min-height: 100vh;
+          min-height: 100dvh;
+          overflow: hidden;
+          color: #26372c;
+          background: #173d2a;
+          font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .ggf-login-background {
+          position: absolute;
+          z-index: -1;
+          inset: 0;
+          background-image:
+            linear-gradient(
+              110deg,
+              rgba(7, 32, 21, 0.58) 0%,
+              rgba(7, 32, 21, 0.42) 50%,
+              rgba(7, 32, 21, 0.56) 100%
+            ),
+            url("/images/background/images1.jpg");
+          background-position: center;
+          background-repeat: no-repeat;
+          background-size: cover;
+        }
+
+        .ggf-login-visual {
+          position: relative;
+          display: flex;
+          min-width: 0;
+          min-height: 100vh;
+          min-height: 100dvh;
+          flex-direction: column;
+          justify-content: center;
+          overflow: hidden;
+          padding: 100px 6%;
+          color: #ffffff;
+          background: transparent;
+        }
+
+        .ggf-login-brand {
+          position: absolute;
+          z-index: 1;
+          top: 40px;
+          left: 6%;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .ggf-login-brand-logo {
+          display: block;
+          width: 49px;
+          height: 49px;
+          flex-shrink: 0;
+          object-fit: contain;
+        }
+
+        .ggf-login-brand-text {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .ggf-login-brand-text strong {
+          color: #ffffff;
+          font-size: 15px;
+          font-weight: 700;
+          line-height: 1.4;
+        }
+
+        .ggf-login-brand-text span {
+          color: rgba(255, 255, 255, 0.88);
+          font-size: 11px;
+          line-height: 1.5;
+        }
+
+        .ggf-login-hero {
+          position: relative;
+          z-index: 1;
+          width: 100%;
+          max-width: 590px;
+        }
+
+        .ggf-login-hero h1 {
+          margin: 0;
+          color: #ffffff;
+          font-size: clamp(36px, 3.9vw, 54px);
+          font-weight: 700;
+          line-height: 1.13;
+          letter-spacing: -1.5px;
+        }
+
+        .ggf-login-hero p {
+          max-width: 510px;
+          margin: 24px 0 0;
+          color: rgba(255, 255, 255, 0.92);
+          font-size: 15px;
+          line-height: 1.85;
+        }
+
+        .ggf-login-visual-footer {
+          position: absolute;
+          z-index: 1;
+          right: 25px;
+          bottom: 20px;
+          left: 6%;
+          margin: 0;
+          color: rgba(255, 255, 255, 0.86);
+          font-size: 11px;
+          line-height: 1.6;
+        }
+
+        .ggf-login-panel {
+          display: flex;
+          min-width: 0;
+          min-height: 100vh;
+          min-height: 100dvh;
+          align-items: center;
+          justify-content: center;
+          padding: 35px clamp(24px, 3.1vw, 48px);
+          background: transparent;
+        }
+
+        .ggf-login-card {
+          width: 100%;
+          max-width: 440px;
+          padding: 43px 38px 29px;
+          border: 1px solid rgba(225, 230, 225, 0.8);
+          border-radius: 20px;
+          background: rgba(255, 255, 255, 0.97);
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.13);
+        }
+
+        .ggf-login-logo-wrap {
+          display: flex;
+          height: 96px;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 24px;
+        }
+
+        .ggf-login-main-logo {
+          display: block;
+          width: 112px;
+          height: 90px;
+          object-fit: contain;
+        }
+
+        .ggf-login-heading {
+          margin-bottom: 32px;
+          text-align: center;
+        }
+
+        .ggf-login-heading h2 {
+          margin: 0;
+          color: #1c402b;
+          font-size: 29px;
+          font-weight: 700;
+          line-height: 1.3;
+          letter-spacing: -0.5px;
+          text-transform: none;
+        }
+
+        .ggf-login-heading p {
+          margin: 9px 0 0;
+          color: #7b837d;
+          font-size: 13px;
+          line-height: 1.6;
+        }
+
+        .ggf-login-form {
+          display: flex;
+          flex-direction: column;
+          gap: 22px;
+        }
+
+        .ggf-login-field {
+          display: flex;
+          min-width: 0;
+          flex-direction: column;
+          gap: 9px;
+        }
+
+        .ggf-login-field > label {
+          color: #35443a;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        .ggf-login-field input {
+          display: block;
+          width: 100%;
+          min-width: 0;
+          height: 52px;
+          padding: 0 15px;
+          border: 1px solid #d8e0d9;
+          border-radius: 9px;
+          outline: none;
+          background: #ffffff;
+          color: #24342a;
+          font-family: inherit;
+          font-size: 13px;
+          transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+        }
+
+        .ggf-login-field input::placeholder {
+          color: #a0a8a2;
+        }
+
+        .ggf-login-field input:focus {
+          border-color: #34794e;
+          box-shadow: 0 0 0 3px rgba(52, 121, 78, 0.1);
+        }
+
+        .ggf-login-field input:disabled {
+          cursor: not-allowed;
+          background: #f5f7f5;
+        }
+
+        .ggf-login-password-wrap {
+          position: relative;
+          width: 100%;
+        }
+
+        .ggf-login-password-wrap input {
+          padding-right: 104px;
+        }
+
+        .ggf-login-show-password {
+          position: absolute;
+          top: 50%;
+          right: 12px;
+          transform: translateY(-50%);
+          padding: 5px 0;
+          border: 0;
+          background: transparent;
+          color: #34794e;
+          cursor: pointer;
+          font-family: inherit;
+          font-size: 11px;
+          white-space: nowrap;
+        }
+
+        .ggf-login-show-password:disabled {
+          cursor: not-allowed;
+          opacity: 0.6;
+        }
+
+        .ggf-login-options {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          margin-top: -4px;
+        }
+
+        .ggf-login-forgot {
+          color: #34794e;
+          font-size: 12px;
+          font-weight: 600;
+          text-decoration: none;
+          white-space: nowrap;
+        }
+
+        .ggf-login-forgot:hover {
+          color: #28633e;
+          text-decoration: underline;
+        }
+
+        .ggf-login-remember {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          color: #667169;
+          cursor: pointer;
+          font-size: 12px;
+        }
+
+        .ggf-login-remember input {
+          width: 15px;
+          height: 15px;
+          margin: 0;
+          accent-color: #34794e;
+          cursor: pointer;
+        }
+
+        .ggf-login-error {
+          padding: 11px 13px;
+          border: 1px solid #f1c8c8;
+          border-radius: 8px;
+          background: #fff3f3;
+          color: #b42318;
+          font-size: 12px;
+          line-height: 1.6;
+          overflow-wrap: anywhere;
+        }
+
+        .ggf-login-submit {
+          display: flex;
+          width: 100%;
+          height: 52px;
+          align-items: center;
+          justify-content: center;
+          margin-top: 1px;
+          padding: 0 18px;
+          border: none;
+          border-radius: 9px;
+          background: #34794e;
+          color: #ffffff;
+          cursor: pointer;
+          font-family: inherit;
+          font-size: 13px;
+          font-weight: 700;
+          transition:
+            background 0.2s ease,
+            transform 0.2s ease;
+        }
+
+        .ggf-login-submit:hover:not(:disabled) {
+          transform: translateY(-1px);
+          background: #28633e;
+        }
+
+        .ggf-login-submit:focus-visible {
+          outline: 3px solid rgba(52, 121, 78, 0.25);
+          outline-offset: 3px;
+        }
+
+        .ggf-login-submit:disabled {
+          cursor: wait;
+          opacity: 0.7;
+        }
+
+        .ggf-login-copyright {
+          margin: 30px 0 0;
+          color: #9aa19b;
+          font-size: 10px;
+          line-height: 1.7;
+          text-align: center;
+        }
+
+        @media (max-width: 1050px) and (min-width: 681px) {
+          .ggf-login {
+            grid-template-columns: 54% 46%;
+          }
+
+          .ggf-login-visual {
+            padding-right: 35px;
+            padding-left: 35px;
+          }
+
+          .ggf-login-brand {
+            left: 35px;
+          }
+
+          .ggf-login-hero h1 {
+            font-size: clamp(32px, 4vw, 43px);
+          }
+
+          .ggf-login-panel {
+            padding: 25px 22px;
+          }
+
+          .ggf-login-card {
+            padding: 34px 25px 25px;
+          }
+        }
+
+        @media (min-width: 681px) and (max-height: 760px) {
+          .ggf-login-panel {
+            padding-top: 18px;
+            padding-bottom: 18px;
+          }
+
+          .ggf-login-card {
+            padding-top: 23px;
+            padding-bottom: 22px;
+          }
+
+          .ggf-login-logo-wrap {
+            height: 65px;
+            margin-bottom: 14px;
+          }
+
+          .ggf-login-main-logo {
+            width: 92px;
+            height: 65px;
+          }
+
+          .ggf-login-heading {
+            margin-bottom: 23px;
+          }
+
+          .ggf-login-form {
+            gap: 16px;
+          }
+
+          .ggf-login-copyright {
+            margin-top: 21px;
+          }
+        }
+
+        @media (max-width: 680px) {
+          .ggf-login {
+            display: block;
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow: auto;
+          }
+
+          .ggf-login-background {
+            position: fixed;
+            inset: 0;
+            background-position: center;
+            background-size: cover;
+          }
+
+          .ggf-login-visual {
+            display: none;
+          }
+
+          .ggf-login-panel {
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: 28px 22px;
+          }
+
+          .ggf-login-card {
+            max-width: 440px;
+            padding: 30px 25px 25px;
+            border: 1px solid rgba(225, 230, 225, 0.8);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.97);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.13);
+          }
+
+          .ggf-login-brand {
+            display: none;
+          }
+
+          .ggf-login-mobile-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 30px;
+          }
+
+          .ggf-login-mobile-brand img {
+            width: 43px;
+            height: 43px;
+            flex-shrink: 0;
+            object-fit: contain;
+          }
+
+          .ggf-login-mobile-brand div {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+          }
+
+          .ggf-login-mobile-brand strong {
+            color: #1c402b;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.4;
+          }
+
+          .ggf-login-mobile-brand span {
+            color: #7b837d;
+            font-size: 11px;
+          }
+
+          .ggf-login-logo-wrap {
+            height: 75px;
+            margin-bottom: 18px;
+          }
+
+          .ggf-login-main-logo {
+            width: 96px;
+            height: 75px;
+          }
+
+          .ggf-login-heading {
+            margin-bottom: 27px;
+          }
+
+          .ggf-login-heading h2 {
+            font-size: 27px;
+          }
+
+          .ggf-login-form {
+            gap: 19px;
+          }
+
+          .ggf-login-copyright {
+            margin-top: 25px;
+          }
+        }
+
+        @media (max-width: 380px) {
+          .ggf-login-panel {
+            padding: 20px 15px;
+          }
+
+          .ggf-login-card {
+            padding: 25px 19px 22px;
+            border-radius: 18px;
+          }
+
+          .ggf-login-heading h2 {
+            font-size: 25px;
+          }
+
+          .ggf-login-field input {
+            height: 49px;
+          }
+
+          .ggf-login-password-wrap input {
+            padding-right: 96px;
+          }
+
+          .ggf-login-show-password {
+            right: 9px;
+            font-size: 10px;
+          }
+        }
+      `}</style>
+       </main>
+  </>
   );
 }
