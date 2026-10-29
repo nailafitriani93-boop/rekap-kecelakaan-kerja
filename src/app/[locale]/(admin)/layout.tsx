@@ -60,12 +60,6 @@ export default function AdminLayout({
         if (cancelled) return;
 
         if (!sessionResponse.ok) {
-          if (sessionResponse.status !== 401) {
-            throw new Error(
-              `Pemeriksaan sesi gagal (${sessionResponse.status}).`
-            );
-          }
-
           if (isDashboard) {
             setAuthorizedPath(pathname);
           } else {
@@ -143,7 +137,11 @@ export default function AdminLayout({
         console.error("Gagal memeriksa hak akses:", error);
 
         if (!cancelled) {
-          setAccessDenied(true);
+          if (pathname === "/" || pathname === "/en") {
+            setAuthorizedPath(pathname);
+          } else {
+            router.replace("/signin");
+          }
         }
       }
     };
