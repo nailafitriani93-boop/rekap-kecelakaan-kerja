@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 export const runtime = "nodejs";
 
 type Context = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ Id: string }>;
 };
 
 function formatDate(value: unknown) {
@@ -89,7 +89,7 @@ export async function PUT(
   context: Context
 ) {
   try {
-    const { id } = await context.params;
+    const { Id: id } = await context.params;
 
     if (!id) {
       return NextResponse.json(
@@ -210,7 +210,7 @@ export async function DELETE(
   context: Context
 ) {
   try {
-    const { id } = await context.params;
+    const { Id: id } = await context.params;
     const accidentId = String(id ?? "").trim();
 
     if (!accidentId) {

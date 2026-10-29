@@ -1,4 +1,3 @@
-
 "use client";
 
 import AppHeader from "@/layout/AppHeader";
@@ -34,46 +33,88 @@ export default function AdminLayout({
   useEffect(() => {
     let cancelled = false;
 
-    const checkAccess = () => {
+    const checkAccess = async () => {
       setAuthorizedPath(null);
       setAccessDenied(false);
 
       try {
-        // Dashboard tetap mengikuti perilaku sebelumnya.
-        if (pathname === "/") {
-          setAuthorizedPath(pathname);
-          return;
-        }
-
+        const isDashboard = pathname === "/" || pathname === "/en";
         const currentRaw = localStorage.getItem(
           CURRENT_USER_STORAGE_KEY
         );
 
         if (!currentRaw) {
-          router.replace("/signin");
+          if (isDashboard) {
+            setAuthorizedPath(pathname);
+          } else {
+            router.replace("/signin");
+          }
           return;
         }
 
         const currentUser = JSON.parse(currentRaw) as ManagedUser;
+        const sessionResponse = await fetch("/api/auth/session", {
+          cache: "no-store",
+        });
 
-        // Baca daftar pengguna terbaru yang disimpan dari Manajemen User.
-        const usersRaw = localStorage.getItem(USER_STORAGE_KEY);
+        if (cancelled) return;
 
-        if (!usersRaw) {
-          setAccessDenied(true);
+        if (!sessionResponse.ok) {
+          if (sessionResponse.status !== 401) {
+            throw new Error(
+              `Pemeriksaan sesi gagal (${sessionResponse.status}).`
+            );
+          }
+
+          if (isDashboard) {
+            setAuthorizedPath(pathname);
+          } else {
+            router.replace("/signin");
+          }
           return;
         }
 
-        const users = JSON.parse(usersRaw) as ManagedUser[];
+        const sessionResult = (await sessionResponse.json()) as {
+          authenticated?: boolean;
+          user?: { username?: string };
+        };
+        const sessionUsername = String(sessionResult.user?.username ?? "")
+          .trim()
+          .toLowerCase();
+        const currentUsername = String(currentUser.username ?? "")
+          .trim()
+          .toLowerCase();
+
+        if (
+          !sessionResult.authenticated ||
+          !sessionUsername ||
+          sessionUsername !== currentUsername
+        ) {
+          if (isDashboard) {
+            setAuthorizedPath(pathname);
+          } else {
+            router.replace("/signin");
+          }
+          return;
+        }
+
+        const usersRaw = localStorage.getItem(USER_STORAGE_KEY);
+        const users: ManagedUser[] = usersRaw
+          ? (JSON.parse(usersRaw) as ManagedUser[])
+          : DEFAULT_USERS;
 
         if (!Array.isArray(users)) {
           setAccessDenied(true);
           return;
         }
 
-        // Ambil data terbaru berdasarkan ID pengguna aktif.
         const user = users.find(
-          (item) => item.id === currentUser.id
+          (item) =>
+            String(item.id) === String(currentUser.id) ||
+            (
+              Boolean(currentUser.username) &&
+              String(item.username) === String(currentUser.username)
+            )
         );
 
         if (!user || user.status !== "Aktif") {
@@ -83,29 +124,19 @@ export default function AdminLayout({
 
         const requiredAccess = ROUTE_ACCESS[pathname];
 
-        // Pertahankan perilaku rute yang tidak tercantum di pemetaan.
         if (!requiredAccess) {
           setAuthorizedPath(pathname);
           return;
         }
 
-        // Hak akses kosong atau tidak tersedia tidak otomatis memberi izin.
         const allowedPages = Array.isArray(user.accessPages)
           ? user.accessPages
           : [];
 
-       // User 100001 tetap memiliki akses penuh sebagai administrator utama.
-const isMainAdmin =
-  user.id === "100001" ||
-  user.id === "user-100001";
-
-if (
-  !isMainAdmin &&
-  !allowedPages.includes(requiredAccess)
-) {
-  setAccessDenied(true);
-  return;
-}
+        if (!allowedPages.includes(requiredAccess)) {
+          setAccessDenied(true);
+          return;
+        }
 
         setAuthorizedPath(pathname);
       } catch (error) {
@@ -119,8 +150,8 @@ if (
 
     checkAccess();
 
-    // Periksa kembali jika data pengguna berubah di browser yang sama.
     const handleUserUpdated = () => checkAccess();
+
     window.addEventListener("ggf-user-updated", handleUserUpdated);
     window.addEventListener("storage", handleUserUpdated);
 
