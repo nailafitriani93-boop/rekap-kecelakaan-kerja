@@ -13,6 +13,10 @@ import {
   type Worker,
 } from "@/data/workerData";
 import { type AccidentRecord } from "@/data/appData";
+import {
+  CURRENT_USER_STORAGE_KEY,
+  type ManagedUser,
+} from "@/data/userData";
 
 const MONTHS = [
   "Januari",
@@ -173,6 +177,16 @@ export default function DashboardPage() {
 
     const refreshExportAccess = async () => {
       try {
+        const currentUserRaw = window.localStorage.getItem(
+          CURRENT_USER_STORAGE_KEY
+        );
+
+        if (!currentUserRaw) {
+          if (!cancelled) setCanExportDashboard(false);
+          return;
+        }
+
+        const currentUser = JSON.parse(currentUserRaw) as ManagedUser;
         const response = await fetch("/api/auth/session", {
           cache: "no-store",
         });
@@ -185,17 +199,26 @@ export default function DashboardPage() {
         const session = (await response.json()) as {
           authenticated?: boolean;
           user?: {
+            username?: string;
             status?: string;
             accessPages?: string[];
           };
         };
         const allowedPages = session.user?.accessPages;
+        const localUsername = String(currentUser.username ?? "")
+          .trim()
+          .toLowerCase();
+        const sessionUsername = String(session.user?.username ?? "")
+          .trim()
+          .toLowerCase();
 
         if (!cancelled) {
           setCanExportDashboard(
             Boolean(
               session.authenticated &&
                 session.user?.status === "Aktif" &&
+                localUsername !== "" &&
+                localUsername === sessionUsername &&
                 Array.isArray(allowedPages) &&
                 EXPORT_ACCESS_PAGES.some((page) =>
                   allowedPages.includes(page)
