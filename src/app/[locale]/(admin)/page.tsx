@@ -29,6 +29,14 @@ const MONTHS = [
   "Desember",
 ];
 
+const EXPORT_ACCESS_PAGES = [
+  "form-input-kecelakaan",
+  "rekap-kecelakaan",
+  "master-data",
+  "manajemen-user",
+  "profile",
+];
+
 const PIE_COLORS = [
   "#16843F", // 1. Hijau GGF
   "#E85D75", // 2. Merah mawar
@@ -86,6 +94,9 @@ function getRecordTimeValue(record: AccidentRecord) {
 }
 
 export default function DashboardPage() {
+  const [canExportDashboard, setCanExportDashboard] =
+    useState(false);
+
   const [workers, setWorkers] = useState<Worker[]>(
     fallbackWorkerData
   );
@@ -156,6 +167,61 @@ export default function DashboardPage() {
 
   const selectedMonthSectionRef =
     useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const refreshExportAccess = async () => {
+      try {
+        const response = await fetch("/api/auth/session", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          if (!cancelled) setCanExportDashboard(false);
+          return;
+        }
+
+        const session = (await response.json()) as {
+          authenticated?: boolean;
+          user?: {
+            status?: string;
+            accessPages?: string[];
+          };
+        };
+        const allowedPages = session.user?.accessPages;
+
+        if (!cancelled) {
+          setCanExportDashboard(
+            Boolean(
+              session.authenticated &&
+                session.user?.status === "Aktif" &&
+                Array.isArray(allowedPages) &&
+                EXPORT_ACCESS_PAGES.some((page) =>
+                  allowedPages.includes(page)
+                )
+            )
+          );
+        }
+      } catch (error) {
+        console.error("Gagal memeriksa izin ekspor Dashboard:", error);
+
+        if (!cancelled) {
+          setCanExportDashboard(false);
+        }
+      }
+    };
+
+    void refreshExportAccess();
+    window.addEventListener("ggf-user-updated", refreshExportAccess);
+    window.addEventListener("storage", refreshExportAccess);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("ggf-user-updated", refreshExportAccess);
+      window.removeEventListener("storage", refreshExportAccess);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -1028,12 +1094,14 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
+              {canExportDashboard && (
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() =>
-                    setIsExportMenuOpen((open) => !open)
-                  }
+                  onClick={() => {
+                    if (!canExportDashboard) return;
+                    setIsExportMenuOpen((open) => !open);
+                  }}
                   className="ggf-close-filter inline-flex items-center gap-1.5"
                   aria-haspopup="menu"
                   aria-expanded={isExportMenuOpen}
@@ -1067,6 +1135,7 @@ export default function DashboardPage() {
                       type="button"
                       role="menuitem"
                       onClick={() => {
+                        if (!canExportDashboard) return;
                         exportSelectedMonth(
                           selectedRecords,
                           selectedMonth,
@@ -1083,6 +1152,7 @@ export default function DashboardPage() {
                       type="button"
                       role="menuitem"
                       onClick={() => {
+                        if (!canExportDashboard) return;
                         exportAnnualReport(
                           records,
                           selectedYear ?? monthly.year
@@ -1096,6 +1166,7 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
+              )}
 
               <button
                 type="button"
@@ -4463,4 +4534,3 @@ function exportSelectedMonth(
 
   URL.revokeObjectURL(url);
 }
-
