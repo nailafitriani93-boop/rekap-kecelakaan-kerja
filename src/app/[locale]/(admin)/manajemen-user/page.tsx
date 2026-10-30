@@ -2,7 +2,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DEFAULT_ROLES,
   DEFAULT_USERS,
@@ -66,6 +66,7 @@ export default function ManajemenUserPage() {
   const [editingUser, setEditingUser] = useState<string | null>(null);
 
   const [notice, setNotice] = useState("");
+  const noticeTimeout = useRef<number | null>(null);
   const [activityLog, setActivityLog] = useState<UserActivity[]>([]);
 
   const [activeSection, setActiveSection] =
@@ -130,6 +131,15 @@ export default function ManajemenUserPage() {
     }));
   }, []);
 
+  useEffect(
+    () => () => {
+      if (noticeTimeout.current !== null) {
+        window.clearTimeout(noticeTimeout.current);
+      }
+    },
+    []
+  );
+
   const roleMap = useMemo(
     () => new Map(roles.map((role) => [role.id, role.name])),
     [roles]
@@ -172,8 +182,15 @@ export default function ManajemenUserPage() {
   };
 
   const flash = (message: string) => {
+    if (noticeTimeout.current !== null) {
+      window.clearTimeout(noticeTimeout.current);
+    }
+
     setNotice(message);
-    window.setTimeout(() => setNotice(""), 2800);
+    noticeTimeout.current = window.setTimeout(() => {
+      setNotice("");
+      noticeTimeout.current = null;
+    }, 2800);
   };
 
   const openRoleSection = () => {
