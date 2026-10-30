@@ -51,7 +51,9 @@ const AppHeader: React.FC = () => {
         const user = JSON.parse(raw) as ManagedUser;
         setIsLoggedIn(true);
         setAllowedPages(
-          user.accessPages !== undefined
+          String(sessionResult.user?.username ?? "").trim() === "100001"
+            ? DEFAULT_ACCESS_PAGES
+            : user.accessPages !== undefined
             ? user.accessPages
             : DEFAULT_ACCESS_PAGES
         );
