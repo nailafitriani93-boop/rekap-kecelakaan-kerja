@@ -133,15 +133,43 @@ export default function ManajemenUserPage() {
   }, []);
 
   useEffect(() => {
-    const pendingNotice = window.sessionStorage.getItem(NOTICE_STORAGE_KEY);
-    if (!pendingNotice) return;
+    const storedNotice = window.sessionStorage.getItem(NOTICE_STORAGE_KEY);
+    if (!storedNotice) return;
 
-    window.sessionStorage.removeItem(NOTICE_STORAGE_KEY);
-    setNotice(pendingNotice);
+    let pendingNotice: { message?: string; expiresAt?: number };
+
+    try {
+      pendingNotice = JSON.parse(storedNotice) as {
+        message?: string;
+        expiresAt?: number;
+      };
+    } catch (error) {
+      console.error("Gagal membaca notifikasi akses:", error);
+      window.sessionStorage.removeItem(NOTICE_STORAGE_KEY);
+      return;
+    }
+
+    const remaining = Number(pendingNotice.expiresAt) - Date.now();
+    if (!pendingNotice.message || remaining <= 0) {
+      window.sessionStorage.removeItem(NOTICE_STORAGE_KEY);
+      return;
+    }
+
+    setNotice(pendingNotice.message);
     noticeTimeout.current = window.setTimeout(() => {
       setNotice("");
+      if (window.sessionStorage.getItem(NOTICE_STORAGE_KEY) === storedNotice) {
+        window.sessionStorage.removeItem(NOTICE_STORAGE_KEY);
+      }
       noticeTimeout.current = null;
-    }, 2800);
+    }, remaining);
+
+    return () => {
+      if (noticeTimeout.current !== null) {
+        window.clearTimeout(noticeTimeout.current);
+        noticeTimeout.current = null;
+      }
+    };
   }, []);
 
   useEffect(
@@ -194,16 +222,30 @@ export default function ManajemenUserPage() {
     save(USER_STORAGE_KEY, next);
   };
 
-  const flash = (message: string) => {
+  const flash = (message: string, persistAcrossRemount = false) => {
     if (noticeTimeout.current !== null) {
       window.clearTimeout(noticeTimeout.current);
     }
 
-    window.sessionStorage.setItem(NOTICE_STORAGE_KEY, message);
+    const storedNotice = persistAcrossRemount
+      ? JSON.stringify({ message, expiresAt: Date.now() + 2800 })
+      : null;
+
+    if (storedNotice) {
+      window.sessionStorage.setItem(NOTICE_STORAGE_KEY, storedNotice);
+    } else {
+      window.sessionStorage.removeItem(NOTICE_STORAGE_KEY);
+    }
+
     setNotice(message);
     noticeTimeout.current = window.setTimeout(() => {
       setNotice("");
-      window.sessionStorage.removeItem(NOTICE_STORAGE_KEY);
+      if (
+        storedNotice &&
+        window.sessionStorage.getItem(NOTICE_STORAGE_KEY) === storedNotice
+      ) {
+        window.sessionStorage.removeItem(NOTICE_STORAGE_KEY);
+      }
       noticeTimeout.current = null;
     }, 2800);
   };
@@ -334,11 +376,11 @@ export default function ManajemenUserPage() {
 
       persistUsers(updated);
       logActivity("Memperbarui user", userForm.username.trim());
-      flash(
-        accessPagesChanged
-          ? "Akses berhasil diubah."
-          : "User berhasil diperbarui."
-      );
+      if (accessPagesChanged) {
+        flash("Akses berhasil diperbarui.", true);
+      } else {
+        flash("User berhasil diperbarui.");
+      }
     } else {
       const user: ManagedUser = {
         id: `user-${Date.now()}`,
