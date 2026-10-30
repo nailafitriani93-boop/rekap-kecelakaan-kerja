@@ -20,6 +20,7 @@ import {
 } from "@/data/userData";
 
 const EMPTY_ROLE = { name: "", description: "" };
+const NOTICE_STORAGE_KEY = "ggf-user-management-notice";
 
 const EMPTY_USER = {
   name: "",
@@ -131,6 +132,18 @@ export default function ManajemenUserPage() {
     }));
   }, []);
 
+  useEffect(() => {
+    const pendingNotice = window.sessionStorage.getItem(NOTICE_STORAGE_KEY);
+    if (!pendingNotice) return;
+
+    window.sessionStorage.removeItem(NOTICE_STORAGE_KEY);
+    setNotice(pendingNotice);
+    noticeTimeout.current = window.setTimeout(() => {
+      setNotice("");
+      noticeTimeout.current = null;
+    }, 2800);
+  }, []);
+
   useEffect(
     () => () => {
       if (noticeTimeout.current !== null) {
@@ -186,9 +199,11 @@ export default function ManajemenUserPage() {
       window.clearTimeout(noticeTimeout.current);
     }
 
+    window.sessionStorage.setItem(NOTICE_STORAGE_KEY, message);
     setNotice(message);
     noticeTimeout.current = window.setTimeout(() => {
       setNotice("");
+      window.sessionStorage.removeItem(NOTICE_STORAGE_KEY);
       noticeTimeout.current = null;
     }, 2800);
   };
@@ -294,6 +309,17 @@ export default function ManajemenUserPage() {
     }
 
     if (editingUser) {
+      const previousUser = users.find((user) => user.id === editingUser);
+      const previousAccessPages =
+        previousUser?.accessPages ??
+        USER_ACCESS_PAGES.map((page) => page.id);
+      const nextAccessPages = userForm.accessPages ?? [];
+      const previousAccessSet = new Set(previousAccessPages);
+      const nextAccessSet = new Set(nextAccessPages);
+      const accessPagesChanged =
+        previousAccessSet.size !== nextAccessSet.size ||
+        [...previousAccessSet].some((page) => !nextAccessSet.has(page));
+
       const updated = users.map((user) =>
         user.id === editingUser
           ? {
@@ -308,7 +334,11 @@ export default function ManajemenUserPage() {
 
       persistUsers(updated);
       logActivity("Memperbarui user", userForm.username.trim());
-      flash("User berhasil diperbarui.");
+      flash(
+        accessPagesChanged
+          ? "Akses berhasil diubah."
+          : "User berhasil diperbarui."
+      );
     } else {
       const user: ManagedUser = {
         id: `user-${Date.now()}`,
